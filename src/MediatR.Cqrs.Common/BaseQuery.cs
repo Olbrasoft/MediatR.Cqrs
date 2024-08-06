@@ -1,10 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace MediatR.Cqrs.Common;
-public abstract class BaseQuery<TResult>
+﻿namespace MediatR.Cqrs.Common;
+public class BaseQuery<TResult> : BaseRequest<TResult>, IQuery<TResult>
 {
+    public IQueryProcessor? Processor { get; }
+
+    public BaseQuery(IQueryProcessor processor)
+    {
+        if (processor is null) throw new QueryProcessorNullException();
+
+        Processor = processor;
+    }
+
+    public BaseQuery(IMediator mediator) : base(mediator)
+    {
+    }
+
+    protected BaseQuery()
+    {
+    }
 }

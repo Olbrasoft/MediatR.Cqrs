@@ -1,5 +1,5 @@
 ﻿namespace MediatR.Cqrs.Common;
-public class BaseCommand<TResult> : BaseRequest<TResult>
+public class BaseCommand<TResult> : BaseRequest<TResult> , ICommand<TResult>
 {
     private CommandStatus _status;
 

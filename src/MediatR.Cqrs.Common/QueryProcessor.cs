@@ -1,6 +1,4 @@
-﻿using MediatR.Cqrs.Common.Exceptions;
-
-namespace MediatR.Cqrs.Common;
+﻿namespace MediatR.Cqrs.Common;
 
 public class QueryProcessor : IQueryProcessor
 {
@@ -10,9 +8,14 @@ public class QueryProcessor : IQueryProcessor
 
     public QueryProcessor(IMediator mediator)
     {
-        if (mediator is null) throw new ArgumentNullException(nameof(mediator));
-
-        _mediator = mediator;
+        if (mediator is not null)
+        {
+            _mediator = mediator;
+        }
+        else
+        {
+            throw new ArgumentNullException(nameof(mediator));
+        }
     }
 
     public async Task<TResult> ProcessAsync<TResult>(IQuery<TResult> query, CancellationToken token = default)

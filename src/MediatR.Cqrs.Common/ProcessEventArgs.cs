@@ -1,13 +1,7 @@
 ﻿namespace MediatR.Cqrs.Common;
 
-public class ProcessEventArgs : EventArgs
+public class ProcessEventArgs(object query, object? result = null) : EventArgs
 {
-    public ProcessEventArgs(object query, object? result = null)
-    {
-        Query = query;
-        Result = result;
-    }
-
-    public object Query { get; }
-    public object? Result { get; }
+    public object Query { get; } = query ?? throw new ArgumentNullException(nameof(query));
+    public object? Result { get; } = result;
 }

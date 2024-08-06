@@ -1,7 +1,4 @@
-﻿using FluentAssertions;
-using MediatR.Cqrs.Common.Exceptions;
-
-namespace MediatR.Cqrs.Common.Tests.Exceptions;
+﻿namespace MediatR.Cqrs.Common.Tests.Exceptions;
 public class QueryNullExceptionTests
 {
     [Fact]
