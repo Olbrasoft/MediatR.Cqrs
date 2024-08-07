@@ -1,6 +1,4 @@
-﻿using Moq;
-
-namespace MediatR.Cqrs.Common.Tests;
+﻿namespace MediatR.Cqrs.Common.Tests;
 public class PingTests
 {
     //Ping IsAssignableFrom BaseRequest<string>

@@ -8,10 +8,17 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.7" />
+    <PackageReference Include="Olbrasoft.Mapping.Abstractions" Version="7.3.2" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\MediatR.Cqrs.Common\MediatR.Cqrs.Common.csproj" />
   </ItemGroup>
+	<ItemGroup>
+		<Using Include="Microsoft.EntityFrameworkCore" />
 
+		<Using Include="Olbrasoft.Mapping" />
+		<Using Include="System.Linq.Expressions" />
+		<Using Include="MediatR.Cqrs.Common"/>
+	</ItemGroup>
 </Project>
