@@ -1,6 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-
-namespace MediatR.Cqrs.EntityFrameworkCore.Tests;
+﻿namespace MediatR.Cqrs.EntityFrameworkCore.Tests;
 
 public class PingLibraryDbContext : DbContext
 {

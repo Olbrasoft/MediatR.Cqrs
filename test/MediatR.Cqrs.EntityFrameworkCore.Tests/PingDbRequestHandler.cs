@@ -1,9 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Olbrasoft.Mapping;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 
 namespace MediatR.Cqrs.EntityFrameworkCore.Tests;
-public class PingDbRequestHandler : DbRequestHandler<PingLibraryDbContext,PingBook,PingBaseRequest,PingBook> 
+public class PingDbRequestHandler : DbRequestHandler<PingLibraryDbContext, PingBook, PingBaseRequest, PingBook>
 {
 
     public PingDbRequestHandler(PingLibraryDbContext context) : base(context)
@@ -47,13 +45,13 @@ public class PingDbRequestHandler : DbRequestHandler<PingLibraryDbContext,PingBo
         => await base.GetEnumerableAsync(queryable, token);
 
 
-   public new async Task<IEnumerable<PingBook>> GetEnumerableAsync(Expression<Func<PingBook, bool>> exp, CancellationToken token)
-   => await base.GetEnumerableAsync(exp, token);
+    public new async Task<IEnumerable<PingBook>> GetEnumerableAsync(Expression<Func<PingBook, bool>> exp, CancellationToken token)
+    => await base.GetEnumerableAsync(exp, token);
 
 
-   public new async Task<IEnumerable<TDestination>> GetEnumerableAsync<TDestination>(Expression<Func<PingBook, bool>> expression, CancellationToken token = default)
-     where TDestination : new()
-      => await base.GetEnumerableAsync<TDestination>(expression, token);
+    public new async Task<IEnumerable<TDestination>> GetEnumerableAsync<TDestination>(Expression<Func<PingBook, bool>> expression, CancellationToken token = default)
+      where TDestination : new()
+       => await base.GetEnumerableAsync<TDestination>(expression, token);
 
 
     public new async Task<TDestination?> GetOneOrNullAsync<TDestination>(IQueryable<PingBook> queryable, CancellationToken token) where TDestination : new()
@@ -61,7 +59,7 @@ public class PingDbRequestHandler : DbRequestHandler<PingLibraryDbContext,PingBo
 
     public new async Task<TDestination?> GetOneOrNullAsync<TDestination>(Expression<Func<PingBook, bool>> expression, CancellationToken token)
     where TDestination : new()
-         => await base.GetOneOrNullAsync<TDestination>(expression,token);
+         => await base.GetOneOrNullAsync<TDestination>(expression, token);
 
 
     public new async Task<IEnumerable<TDestination>> GetEnumerableAsync<TDestination>(IQueryable queryable, CancellationToken token)

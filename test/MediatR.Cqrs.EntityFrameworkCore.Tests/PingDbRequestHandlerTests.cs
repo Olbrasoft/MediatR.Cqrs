@@ -1,6 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-
-namespace MediatR.Cqrs.EntityFrameworkCore.Tests;
+﻿namespace MediatR.Cqrs.EntityFrameworkCore.Tests;
 public class PingDbRequestHandlerTests : IDisposable
 {
 
@@ -53,9 +51,9 @@ public class PingDbRequestHandlerTests : IDisposable
     public async Task ShouldReturnFalse()
     {
         //Arrange
-        
+
         var handler = new PingDbRequestHandler(_context);
- 
+
         //Act
         var result = await handler.ExistsAsync(x => x.Id == 5);
 
@@ -70,7 +68,7 @@ public class PingDbRequestHandlerTests : IDisposable
     public async Task ShouldReturnTrue()
     {
         //Arrange
-    
+
         var handler = new PingDbRequestHandler(_context);
 
         //Act
@@ -143,7 +141,7 @@ public class PingDbRequestHandlerTests : IDisposable
 
         //Assert
         result.Should().Be("Book1");
-       
+
     }
 
     //GetOneOrNullAsync return null
@@ -168,7 +166,7 @@ public class PingDbRequestHandlerTests : IDisposable
         var handler = new PingDbRequestHandler(_context);
 
         //Act
-        var result = (await handler.GetOneOrNullAsync(x => x.Id == 3 , default))?.Title;
+        var result = (await handler.GetOneOrNullAsync(x => x.Id == 3, default))?.Title;
 
         //Assert
         result.Should().Be("Book3");
@@ -247,7 +245,7 @@ public class PingDbRequestHandlerTests : IDisposable
         //Assert
         result.Should().Be("Book1");
     }
-    
+
     //GetOneOrNullAsync with TDestination return null
     [Fact]
     public async Task GetOneOrNullAsync_WithTDestination_ShouldReturnNull()
@@ -257,7 +255,7 @@ public class PingDbRequestHandlerTests : IDisposable
         var handler = new PingDbRequestHandler(projector, _context);
 
         //Act
-        var result = await handler.GetOneOrNullAsync<PingDtoBook>(handler.GetWhere(x => x.Title == "Book5"), default);
+        var result = await handler.GetOneOrNullAsync<PingDtoBook>(handler.GetWhere(x => x.Title == "Book100"), default);
 
         //Assert
         result.Should().BeNull();
@@ -308,6 +306,6 @@ public class PingDbRequestHandlerTests : IDisposable
         result.Should().HaveCount(3);
     }
 
-    
+
 
 }
