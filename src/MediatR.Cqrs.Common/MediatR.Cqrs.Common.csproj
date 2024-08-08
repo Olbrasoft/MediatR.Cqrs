@@ -8,10 +8,11 @@
 
   <ItemGroup>
     <PackageReference Include="MediatR" Version="12.4.0" />
+    <PackageReference Include="Olbrasoft.Mapping.Abstractions" Version="7.3.2" />
   </ItemGroup>
 
 	<ItemGroup>
-		<Using Include="MediatR.Cqrs.Common.Exceptions"/>
+		<Using Include="MediatR.Cqrs.Common.Exceptions" />
 	</ItemGroup>
 	
 </Project>

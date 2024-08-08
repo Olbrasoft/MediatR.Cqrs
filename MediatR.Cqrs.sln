@@ -11,7 +11,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MediatR.Cqrs.Common.Tests",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MediatR.Cqrs.EntityFrameworkCore", "src\MediatR.Cqrs.EntityFrameworkCore\MediatR.Cqrs.EntityFrameworkCore.csproj", "{A4E37E62-E711-4EFD-A0E3-37D42AB71F6A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MediatR.Cqrs.EntityFrameworkCore.Tests", "test\MediatR.Cqrs.EntityFrameworkCore.Tests\MediatR.Cqrs.EntityFrameworkCore.Tests.csproj", "{BD689971-5454-4A69-9C2D-D93BA1178894}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MediatR.Cqrs.EntityFrameworkCore.Tests", "test\MediatR.Cqrs.EntityFrameworkCore.Tests\MediatR.Cqrs.EntityFrameworkCore.Tests.csproj", "{BD689971-5454-4A69-9C2D-D93BA1178894}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MediatR.Cqrs.FreeSql", "src\MediatR.Cqrs.FreeSql\MediatR.Cqrs.FreeSql.csproj", "{6464B327-51C1-44F3-8337-A948F6405D76}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MediatR.Cqrs.FreeSql.Tests", "test\MediatR.Cqrs.FreeSql.Tests\MediatR.Cqrs.FreeSql.Tests.csproj", "{8C12C665-BAFE-4E9E-A6E7-85AD6994ABF3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,6 +39,14 @@ Global
 		{BD689971-5454-4A69-9C2D-D93BA1178894}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BD689971-5454-4A69-9C2D-D93BA1178894}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BD689971-5454-4A69-9C2D-D93BA1178894}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6464B327-51C1-44F3-8337-A948F6405D76}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6464B327-51C1-44F3-8337-A948F6405D76}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6464B327-51C1-44F3-8337-A948F6405D76}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6464B327-51C1-44F3-8337-A948F6405D76}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8C12C665-BAFE-4E9E-A6E7-85AD6994ABF3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8C12C665-BAFE-4E9E-A6E7-85AD6994ABF3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8C12C665-BAFE-4E9E-A6E7-85AD6994ABF3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8C12C665-BAFE-4E9E-A6E7-85AD6994ABF3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -42,6 +54,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{4103DD80-4E7C-464A-8024-BD2E940EDA0E} = {A2FE57C2-9182-49F8-BE9F-4668382C2CC7}
 		{BD689971-5454-4A69-9C2D-D93BA1178894} = {A2FE57C2-9182-49F8-BE9F-4668382C2CC7}
+		{8C12C665-BAFE-4E9E-A6E7-85AD6994ABF3} = {A2FE57C2-9182-49F8-BE9F-4668382C2CC7}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {805EA430-8E29-4107-9913-14D5F7DABF76}
