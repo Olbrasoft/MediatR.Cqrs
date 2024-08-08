@@ -1,12 +1,23 @@
 ﻿namespace MediatR.Cqrs.Common;
-public class ChangeStatusEventArgs : EventArgs
-{
-    public CommandStatus OldStatus { get; set; }
-    public CommandStatus NewStatus { get; set; }
 
-    public ChangeStatusEventArgs(CommandStatus oldStatus, CommandStatus newStatus)
-    {
-        OldStatus = oldStatus;
-        NewStatus = newStatus;
-    }
+
+/// <summary>
+/// Event arguments for the status change event.
+/// </summary>
+/// <remarks>
+/// Initializes a new instance of the <see cref="ChangeStatusEventArgs"/> class.
+/// </remarks>
+/// <param name="oldStatus">The old status.</param>
+/// <param name="newStatus">The new status.</param>
+public class ChangeStatusEventArgs(CommandStatus oldStatus, CommandStatus newStatus) : EventArgs
+{
+    /// <summary>
+    /// Gets or sets the old status.
+    /// </summary>
+    public CommandStatus OldStatus { get; set; } = oldStatus;
+
+    /// <summary>
+    /// Gets or sets the new status.
+    /// </summary>
+    public CommandStatus NewStatus { get; set; } = newStatus;
 }

@@ -1,11 +1,11 @@
 ﻿using MediatR.Cqrs.Common;
 
 namespace MediatR.Cqrs.EntityFrameworkCore.Tests;
-public class PingBaseCommand : BaseCommand<PingBook>
+public class PingBookBaseCommand : BaseCommand<PingBook>
 {
  
 
-    protected PingBaseCommand()
+    public PingBookBaseCommand()
     {
     }
 }

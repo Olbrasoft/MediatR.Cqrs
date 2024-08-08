@@ -1,6 +1,4 @@
-﻿using MediatR.Cqrs.EntityFrameworkCore;
-
-namespace Olbrasoft.Data.Cqrs.EntityFrameworkCore;
+﻿namespace MediatR.Cqrs.EntityFrameworkCore;
 
 public abstract class DbQueryHandler<TContext, TEntity, TQuery, TResult> : DbRequestHandler<TContext, TEntity, TQuery, TResult>, IQueryHandler<TQuery, TResult> where TQuery : IQuery<TResult>
     where TContext : DbContext where TEntity : class

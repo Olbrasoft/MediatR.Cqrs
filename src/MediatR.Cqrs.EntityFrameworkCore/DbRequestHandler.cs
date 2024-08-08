@@ -1,15 +1,48 @@
 ﻿namespace MediatR.Cqrs.EntityFrameworkCore;
-public abstract class DbRequestHandler<TContext, TEntity, TRequest, TResult>(TContext context) : IRequestHandler<TRequest, TResult>
-    where TEntity : class where TContext : DbContext where TRequest : IRequest<TResult>
-{   
-    private DbSet<TEntity>? _entities;
-    private readonly IProjector? _projector;
 
+/// <summary>
+/// Represents a base class for handling database requests using Entity Framework Core.
+/// </summary>
+/// <typeparam name="TContext">The type of the database context</typeparam>
+/// <typeparam name="TEntity">The type of the entity</typeparam>
+/// <typeparam name="TRequest">The type of the request</typeparam>
+/// <typeparam name="TResult">The type of the result</typeparam>
+/// <param name="context">The database context</param>
+public abstract class DbRequestHandler<TContext, TEntity, TRequest, TResult>
+    (TContext context) : IRequestHandler<TRequest, TResult>
+    where TEntity : class where TContext : DbContext where TRequest : IRequest<TResult>
+{
+
+    /// <summary>
+    /// The entities in the database
+    /// </summary>
+    private DbSet<TEntity>? _entities;
+
+    /// <summary>
+    /// The database context
+    /// </summary>
     protected virtual TContext Context { get; } = context ?? throw new ArgumentNullException(nameof(context));
+
+
+    /// <summary>
+    /// The entities in the database
+    /// </summary>
     protected DbSet<TEntity> Entities { get => _entities is null ? Context.Set<TEntity>() : _entities; private set => _entities = value; }
 
+    /// <summary>
+    /// The projector used for projecting entities
+    /// </summary>
+    protected IProjector? Projector { get; }
+
+
+    /// <summary>
+    /// Represents a base class for handling database requests using Entity Framework Core.
+    /// </summary>
+    /// <param name="projector">The projector used for projecting entities</param>
+    /// <param name="context">The database context</param>
+    /// <exception cref="ArgumentNullException">Thrown when the projector is null</exception>
     public DbRequestHandler(IProjector projector, TContext context) : this(context)
-    => _projector = projector ?? throw new ArgumentNullException(nameof(projector));
+    => Projector = projector ?? throw new ArgumentNullException(nameof(projector));
 
     /// <summary>
     /// Query conditions，Where(a => a.Id > 10)，Support navigation object query，Where(a => a.Author.Email == "2881099@qq.com")
@@ -22,7 +55,7 @@ public abstract class DbRequestHandler<TContext, TEntity, TRequest, TResult>(TCo
     /// Sort by column ascending，OrderBy(a => a.Time)
     /// </summary>
     /// <typeparam name="TMember">property/column to sort by ascending</typeparam>
-    /// <param name="column">Selector property/column for ascending order</param>
+    /// <param name="columnSelector">Selector property/column for ascending order</param>
     /// <returns>Ascending selection</returns>
     protected IOrderedQueryable<TEntity> GetOrderBy<TMember>(Expression<Func<TEntity, TMember>> columnSelector) => Entities.OrderBy(columnSelector);
 
@@ -37,54 +70,141 @@ public abstract class DbRequestHandler<TContext, TEntity, TRequest, TResult>(TCo
 
     #region ExistsAsync
 
+    /// <summary>
+    /// Checks if any entity exists in the database.
+    /// </summary>
+    /// <param name="token">Cancellation token</param>
+    /// <returns>True if any entity exists, otherwise false</returns>
     protected Task<bool> ExistsAsync(CancellationToken token = default) => Entities.AnyAsync(token);
 
-    protected async Task<bool> ExistsAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken token = default)
-        => await Entities.AnyAsync(predicate, token);
+    /// <summary>
+    /// Checks if any entity exists in the database that matches the specified predicate.
+    /// </summary>
+    /// <param name="predicate">The predicate to filter the entities</param>
+    /// <param name="token">Cancellation token</param>
+    /// <returns>True if any entity exists, otherwise false</returns>
+    protected Task<bool> ExistsAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken token = default)
+        => Entities.AnyAsync(predicate, token);
 
     #endregion
 
     #region GetEnumerableAsync
 
-    protected async Task<IEnumerable<TDestination>> GetEnumerableAsync<TDestination>(CancellationToken token)
+    /// <summary>
+    /// Retrieves a collection of entities from the database and projects them to the specified destination type.
+    /// </summary>
+    /// <typeparam name="TDestination">The type of the destination</typeparam>
+    /// <param name="token">Cancellation token</param>
+    /// <returns>Collection of projected entities</returns>
+    protected async Task<IEnumerable<TDestination>> GetEnumerableAsync<TDestination>(CancellationToken token = default)
        where TDestination : new()
       => await ProjectTo<TDestination>(Entities).ToArrayAsync(token);
 
-    protected async Task<IEnumerable<TDestination>> GetEnumerableAsync<TDestination>(IQueryable queryable, CancellationToken token)
+
+    /// <summary>
+    /// Retrieves a collection of entities from the specified queryable and projects them to the specified destination type.
+    /// </summary>
+    /// <typeparam name="TDestination">The type of the destination</typeparam>
+    /// <param name="queryable">The queryable to retrieve entities from</param>
+    /// <param name="token">Cancellation token</param>
+    /// <returns>Collection of projected entities</returns>
+    protected async Task<IEnumerable<TDestination>> GetEnumerableAsync<TDestination>(IQueryable queryable, CancellationToken token = default)
      where TDestination : new()
      => await ProjectTo<TDestination>(queryable).ToArrayAsync(token);
 
-    protected async Task<IEnumerable<TEntity>> GetEnumerableAsync(IQueryable<TEntity> queryable, CancellationToken token)
+
+    ///<summary>
+    /// Retrieves a collection of entities from the specified queryable.
+    /// </summary>
+    /// <param name="queryable">The queryable to retrieve entities from</param>
+    /// <param name="token">Cancellation token</param>
+    /// <returns>Collection of entities</returns>
+    protected async Task<IEnumerable<TEntity>> GetEnumerableAsync(IQueryable<TEntity> queryable, CancellationToken token = default)
      => await queryable.ToArrayAsync(token);
 
-    protected async Task<IEnumerable<TDestination>> GetEnumerableAsync<TDestination>(Expression<Func<TEntity, bool>> expression, CancellationToken token)
+    /// <summary>
+    /// Retrieves a collection of entities from the database that match the specified expression and projects them to the specified destination type.
+    /// </summary>
+    /// <typeparam name="TDestination">The type of the destination</typeparam>
+    /// <param name="expression">The expression to filter the entities</param>
+    /// <param name="token">Cancellation token</param>
+    /// <returns>Collection of projected entities</returns>
+    protected async Task<IEnumerable<TDestination>> GetEnumerableAsync<TDestination>(Expression<Func<TEntity, bool>> expression, CancellationToken token = default)
      where TDestination : new()
       => await ProjectTo<TDestination>(GetWhere(expression)).ToArrayAsync(token);
 
-    protected async Task<IEnumerable<TEntity>> GetEnumerableAsync(Expression<Func<TEntity, bool>> exp, CancellationToken token)
-     => await GetWhere(exp).ToArrayAsync(token);
+    /// <summary>
+    /// Retrieves a collection of entities from the database that match the specified expression.
+    /// </summary>
+    /// <param name="expression">The expression to filter the entities</param>
+    /// <param name="token">Cancellation token</param>
+    /// <returns>Collection of entities</returns>
+    protected async Task<IEnumerable<TEntity>> GetEnumerableAsync(Expression<Func<TEntity, bool>> expression, CancellationToken token)
+     => await GetWhere(expression).ToArrayAsync(token);
 
     #endregion
 
     #region GetOneOrNullAsync
 
-    protected async Task<TEntity?> GetOneOrNullAsync(IQueryable<TEntity> queryable, CancellationToken token)
-          => await queryable.SingleOrDefaultAsync(token);
+    /// <summary>
+    /// Retrieves a single entity from the specified queryable or null if no entity is found.
+    /// </summary>
+    /// <param name="queryable">The queryable to retrieve the entity from</param>
+    /// <param name="token">Cancellation token</param>
+    /// <returns>The retrieved entity or null</returns>
+    protected Task<TEntity?> GetOneOrNullAsync(IQueryable<TEntity> queryable, CancellationToken token = default)
+          => queryable.SingleOrDefaultAsync(token);
 
-    protected async Task<TDestination?> GetOneOrNullAsync<TDestination>(IQueryable<TEntity> queryable, CancellationToken token) where TDestination : new()
-          => await ProjectTo<TDestination>(queryable).SingleOrDefaultAsync(token);
+    /// <summary>
+    /// Retrieves a single entity from the specified queryable and projects it to the specified destination type or null if no entity is found.
+    /// </summary>
+    /// <typeparam name="TDestination">The type of the destination</typeparam>
+    /// <param name="queryable">The queryable to retrieve the entity from</param>
+    /// <param name="token">Cancellation token</param>
+    /// <returns>The projected entity or null</returns>
+    protected Task<TDestination?> GetOneOrNullAsync<TDestination>(IQueryable<TEntity> queryable, CancellationToken token = default) where TDestination : new()
+          => ProjectTo<TDestination>(queryable).SingleOrDefaultAsync(token);
 
-    protected async Task<TEntity?> GetOneOrNullAsync(Expression<Func<TEntity, bool>> expression, CancellationToken token)
-    => await GetOneOrNullAsync(GetWhere(expression), token);
+    /// <summary>
+    /// Retrieves a single entity from the database that matches the specified expression or null if no entity is found.
+    /// </summary>
+    /// <param name="expression">The expression to filter the entity</param>
+    /// <param name="token">Cancellation token</param>
+    /// <returns>The retrieved entity or null</returns>
+    protected Task<TEntity?> GetOneOrNullAsync(Expression<Func<TEntity, bool>> expression, CancellationToken token)
+    => GetOneOrNullAsync(GetWhere(expression), token);
 
-    protected async Task<TDestination?> GetOneOrNullAsync<TDestination>(Expression<Func<TEntity, bool>> expression, CancellationToken token)
+
+    /// <summary>
+    /// Retrieves a single entity from the database that matches the specified expression and projects it to the specified destination type or null if no entity is found.
+    /// </summary>
+    /// <typeparam name="TDestination">The type of the destination</typeparam>
+    /// <param name="expression">The expression to filter the entity</param>
+    /// <param name="token">Cancellation token</param>
+    /// <returns>The projected entity or null</returns>
+    protected Task<TDestination?> GetOneOrNullAsync<TDestination>(Expression<Func<TEntity, bool>> expression, CancellationToken token = default)
     where TDestination : new()
-         => await GetOneOrNullAsync<TDestination>(GetWhere(expression), token);
+         => GetOneOrNullAsync<TDestination>(GetWhere(expression), token);
 
     #endregion
 
+    /// <summary>
+    /// Handles the database request and returns the result.
+    /// </summary>
+    /// <param name="request">The request</param>
+    /// <param name="token">Cancellation token</param>
+    /// <returns>The result of the request</returns>
     public abstract Task<TResult> Handle(TRequest request, CancellationToken token);
 
+
+
+    /// <summary>
+    /// Projects the source queryable to the specified destination type using the configured projector.
+    /// </summary>
+    /// <typeparam name="TDestination">The type of the destination</typeparam>
+    /// <param name="source">The source queryable</param>
+    /// <returns>The projected queryable</returns>
+    /// <exception cref="NullReferenceException">Thrown when the projector is null</exception>
     protected IQueryable<TDestination> ProjectTo<TDestination>(IQueryable source)
-       => _projector is null ? throw new NullReferenceException(nameof(_projector)) : _projector.ProjectTo<TDestination>(source);
+       => Projector is null ? throw new NullReferenceException(nameof(Projector)) : Projector.ProjectTo<TDestination>(source);
 }

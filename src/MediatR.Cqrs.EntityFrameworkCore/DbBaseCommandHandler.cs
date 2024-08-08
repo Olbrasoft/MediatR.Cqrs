@@ -1,14 +1,18 @@
-﻿using MediatR.Cqrs.EntityFrameworkCore.Tests;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
+﻿using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace MediatR.Cqrs.EntityFrameworkCore;
-public abstract class DbBaseCommandHandler<TContext, TEntity, TCommand, TResult> : DbCommandHandler<TContext, TEntity, TCommand, TResult>,ICommandHandler<TCommand, TResult>
+
+/// <summary>
+/// Base class for command handlers that interact with a database using Entity Framework Core.
+/// </summary>
+/// <typeparam name="TContext">The type of the DbContext.</typeparam>
+/// <typeparam name="TEntity">The type of the entityToAdd.</typeparam>
+/// <typeparam name="TCommand">The type of the command.</typeparam>
+/// <typeparam name="TResult">The type of the result.</typeparam>
+public abstract class DbBaseCommandHandler<TContext, TEntity, TCommand, TResult> : DbCommandHandler<TContext, TEntity, TCommand, TResult>, ICommandHandler<TCommand, TResult>
    where TContext : DbContext where TEntity : class where TCommand : BaseCommand<TResult>
 {
-
-    
-    protected TCommand? Command;
-
+    protected TCommand? Command { get; set; }
 
     protected DbBaseCommandHandler(TContext context) : base(context)
     {
@@ -26,7 +30,6 @@ public abstract class DbBaseCommandHandler<TContext, TEntity, TCommand, TResult>
     {
     }
 
-    
 
     protected void ThrowIfCommandStatusCannotBeSet(CommandStatus status)
     {
@@ -34,6 +37,7 @@ public abstract class DbBaseCommandHandler<TContext, TEntity, TCommand, TResult>
             return;
         throw new InvalidOperationException($"Failed to set command status: {status}");
     }
+
 
     protected bool TrySetCommandStatus(CommandStatus status)
     {
@@ -45,24 +49,37 @@ public abstract class DbBaseCommandHandler<TContext, TEntity, TCommand, TResult>
     }
 
 
-    protected virtual async Task<CommandStatus> RemoveAndSaveAsync(Expression<Func<TEntity, bool>> exp, CancellationToken token = default)
-    {
-        var entity = await GetOneOrNullAsync(exp, token);
 
-        if (entity is not null) return await RemoveAndSaveAsync(entity, token);
+    /// <summary>
+    /// Removes one entity that matches the specified expression and saves the changes asynchronously.
+    /// </summary>
+    /// <param name="oneEntityPredicate">The expression to match the entity to remove. If more than one entity matches the expression, an exception is thrown</param>
+    /// <param name="token">The cancellation token.</param>
+    /// <returns>The command status indicating the result of the operation.</returns>
+    protected virtual async Task<CommandStatus> RemoveOneAndSaveAsync(Expression<Func<TEntity, bool>> oneEntityPredicate, CancellationToken token = default)
+    {
+        var entity = await GetOneOrNullAsync(oneEntityPredicate, token);
+
+        if (entity is not null) return await RemoveOneAndSaveAsync(entity, token);
 
         TrySetCommandStatus(CommandStatus.NotFound);
 
         return CommandStatus.NotFound;
     }
 
-    protected virtual async Task<CommandStatus> RemoveAndSaveAsync(TEntity detachedOrUnchangedEntity, CancellationToken token = default)
+    /// <summary>
+    /// Removes one entityToAdd that matches the specified expression and saves the changes asynchronously.
+    /// </summary>
+    /// <param name="detachedOrUnchangedEntityForRemove">The entityToAdd to remove.</param>
+    /// <param name="token">The cancellation token.</param>
+    /// <returns>The command status indicating the result of the operation.</returns>
+    protected virtual async Task<CommandStatus> RemoveOneAndSaveAsync(TEntity detachedOrUnchangedEntityForRemove, CancellationToken token = default)
     {
-        var state = GetEntityState(detachedOrUnchangedEntity);
+        var state = GetEntityState(detachedOrUnchangedEntityForRemove);
 
         if (state == EntityState.Detached || state == EntityState.Unchanged)
         {
-            Remove(detachedOrUnchangedEntity);
+            Remove(detachedOrUnchangedEntityForRemove);
 
             if (await SaveOneEntityAsync(token))
             {
@@ -75,11 +92,18 @@ public abstract class DbBaseCommandHandler<TContext, TEntity, TCommand, TResult>
         return CommandStatus.Error;
     }
 
-    protected virtual async Task<CommandStatus> AddAndSaveAsync(TEntity detachedEntity, CancellationToken token = default)
+
+    /// <summary>
+    /// Adds the specified entityToAdd to the context and saves the changes asynchronously.
+    /// </summary>
+    /// <param name="detachedEntityToAdd">The detached entityToAdd to add.</param>
+    /// <param name="token">The cancellation token.</param>
+    /// <returns>The command status indicating the result of the operation.</returns>
+    protected virtual async Task<CommandStatus> AddAndSaveAsync(TEntity detachedEntityToAdd, CancellationToken token = default)
     {
-        if (GetEntityState(detachedEntity) == EntityState.Detached)
+        if (GetEntityState(detachedEntityToAdd) == EntityState.Detached)
         {
-            await AddAsync(detachedEntity, token);
+            await AddAsync(detachedEntityToAdd, token);
 
             if (await SaveOneEntityAsync(token))
             {
@@ -92,18 +116,31 @@ public abstract class DbBaseCommandHandler<TContext, TEntity, TCommand, TResult>
         return CommandStatus.Error;
     }
 
-    protected virtual async Task<CommandStatus> UpdateAndSaveAsync(TEntity unchangedEntity, CancellationToken token = default)
+    /// <summary>
+    /// Updates the specified entityToAdd in the context and saves the changes asynchronously.
+    /// </summary>
+    /// <param name="unchangedEntityToUpdate">The unchanged entityToAdd to update.</param>
+    /// <param name="token">The cancellation token.</param>
+    /// <returns>The command status indicating the result of the operation.</returns>
+    protected virtual async Task<CommandStatus> UpdateAndSaveAsync(TEntity unchangedEntityToUpdate, CancellationToken token = default)
     {
-        Entities.Update(unchangedEntity);
+        Entities.Update(unchangedEntityToUpdate);
 
         TrySetCommandStatus(CommandStatus.Modified);
 
-        return await SaveAsync(unchangedEntity, token);
+        return await SaveAsync(unchangedEntityToUpdate, token);
     }
 
-    protected virtual async Task<CommandStatus> SaveAsync(TEntity modifiedEntity, CancellationToken token = default)
+
+    /// <summary>
+    /// Saves the changes asynchronously for the specified entityToAdd and sets the command status accordingly.
+    /// </summary>
+    /// <param name="modifiedEntityToSave">The modified entityToAdd to save.</param>
+    /// <param name="token">The cancellation token.</param>
+    /// <returns>The command status indicating the result of the operation.</returns>
+    protected virtual async Task<CommandStatus> SaveAsync(TEntity modifiedEntityToSave, CancellationToken token = default)
     {
-        var state = GetEntityState(modifiedEntity);
+        var state = GetEntityState(modifiedEntityToSave);
 
         if (state == EntityState.Unchanged)
         {
@@ -125,7 +162,6 @@ public abstract class DbBaseCommandHandler<TContext, TEntity, TCommand, TResult>
         TrySetCommandStatus(CommandStatus.Error);
         return CommandStatus.Error;
     }
-     
 
     protected virtual EntityEntry<TEntity> Remove(TEntity entity)
     {
@@ -134,23 +170,20 @@ public abstract class DbBaseCommandHandler<TContext, TEntity, TCommand, TResult>
         return result;
     }
 
-    protected virtual async ValueTask<EntityEntry<TEntity>> AddAsync(TEntity entity, CancellationToken cancellationToken = default)
+    protected virtual async ValueTask<EntityEntry<TEntity>> AddAsync(TEntity entityToAdd, CancellationToken cancellationToken = default)
     {
-        var result = await Entities.AddAsync(entity, cancellationToken);
+        var result = await Entities.AddAsync(entityToAdd, cancellationToken);
 
         TrySetCommandStatus(CommandStatus.Added);
 
         return result;
     }
 
-    protected virtual EntityEntry<TEntity> Update(TEntity entity)
+    protected virtual EntityEntry<TEntity> Update(TEntity entityToUpdate)
     {
-        var result = Entities.Update(entity);
+        var result = Entities.Update(entityToUpdate);
         TrySetCommandStatus(CommandStatus.Modified);
         return result;
     }
-
-
-
 }
 

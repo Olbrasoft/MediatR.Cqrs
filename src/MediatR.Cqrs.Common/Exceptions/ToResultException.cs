@@ -2,7 +2,7 @@
 
 public class ToResultException : InvalidOperationException
 {
-    public ToResultException(string paramName) : base($"{paramName} and dispatcher is null.")
+    public ToResultException(string paramName) : base($"{paramName} and Mediator is null.")
     {
     }
 }
