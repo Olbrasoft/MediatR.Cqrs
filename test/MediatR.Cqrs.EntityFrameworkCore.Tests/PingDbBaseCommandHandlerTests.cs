@@ -32,9 +32,7 @@ public class PingDbBaseCommandHandlerTests
 
         await context.AddRangeAsync(
         [
-            new PingBook { Id = 1, Title = "Title 1" },
-            new PingBook { Id = 2, Title = "Title 2" },
-            new PingBook { Id = 3, Title = "Title 3" },
+           
             new PingBook { Id = 4, Title = "Title 4" },
             new PingBook { Id = 5, Title = "Title 5" }
         ]);
@@ -67,9 +65,7 @@ public class PingDbBaseCommandHandlerTests
         context.Database.EnsureCreated();
         await context.AddRangeAsync(
      [
-            new PingBook { Id = 1, Title = "Title 1" },
-            new PingBook { Id = 2, Title = "Title 2" },
-            new PingBook { Id = 3, Title = "Title 3" },
+         
             new PingBook { Id = 4, Title = "Title 4" },
             new PingBook { Id = 5, Title = "Title 5" }
      ]);
@@ -101,9 +97,7 @@ public class PingDbBaseCommandHandlerTests
 
         await context.AddRangeAsync(
   [
-           new PingBook { Id = 1, Title = "Title 1" },
-            new PingBook { Id = 2, Title = "Title 2" },
-            new PingBook { Id = 3, Title = "Title 3" },
+       
             new PingBook { Id = 4, Title = "Title 4" },
             new PingBook { Id = 5, Title = "Title 5" }
   ]);
@@ -142,7 +136,7 @@ public class PingDbBaseCommandHandlerTests
         var handler = new PingDbBaseCommandHandler(context);
 
 
-        var entity = new PingBook { Id = 1, Title = "Title 1" };
+        var entity = new PingBook {  Title = "Title 1" };
 
         //Act
 
@@ -167,7 +161,7 @@ public class PingDbBaseCommandHandlerTests
 
         context.Database.EnsureCreated();
 
-        var entity = new PingBook { Id = 1, Title = "Title 1" };
+        var entity = new PingBook {  Title = "Title 1" };
 
         await context.AddAsync(entity);
 
@@ -188,7 +182,7 @@ public class PingDbBaseCommandHandlerTests
     public void Update_PingBook_ShouldReturnEntityStateModified()
     {
         //Arrange
-        var entity = new PingBook { Id = 1, Title = "Title 1" };
+        var entity = new PingBook {  Title = "Title 1" };
 
         var context = new PingLibraryDbContext(new DbContextOptionsBuilder<PingLibraryDbContext>()
      .UseInMemoryDatabase("PingDbBooks")
@@ -223,11 +217,7 @@ public class PingDbBaseCommandHandlerTests
 
         context.Database.EnsureCreated();
 
-        var entity = new PingBook { Id = 1, Title = "Title 1" };
-
-        await context.AddAsync(entity);
-
-        await context.SaveChangesAsync();
+        var entity = context.Set<PingBook>().First();
 
         entity.Title = "Title 2";
 
@@ -255,11 +245,8 @@ public class PingDbBaseCommandHandlerTests
 
         context.Database.EnsureCreated();
 
-        var entity = new PingBook { Id = 1, Title = "Title 1" };
-
-        await context.AddAsync(entity);
-
-        await context.SaveChangesAsync();
+        var entity = context.Set<PingBook>().First();   
+           
 
         var handler = new PingDbBaseCommandHandler(context);
 
