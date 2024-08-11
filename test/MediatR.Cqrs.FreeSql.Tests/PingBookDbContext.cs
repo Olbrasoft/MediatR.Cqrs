@@ -16,6 +16,21 @@ public class PingBookDbContext : DbContext
     protected override void OnModelCreating(ICodeFirst codefirst)
     {
 
+        codefirst.Entity<PingAuthor>(eb =>
+        {
+            eb.ToTable("PingAuthor");
+            eb.HasKey(e => e.Id);
+            eb.Property(e => e.FirstName).IsRequired().HasMaxLength(255);
+            eb.Property(e => e.LastName).IsRequired().HasMaxLength(255);
+
+            eb.HasData(new[] {
+                new PingAuthor { Id = 1, FirstName = "A", LastName = "B" },
+                new PingAuthor { Id = 2, FirstName = "C", LastName = "D" },
+                new PingAuthor { Id = 3, FirstName = "E", LastName = "F" }
+            });
+        });
+
+
         codefirst.Entity<PingBook>(eb =>
         {
             eb.ToTable("PingBook");
@@ -31,6 +46,7 @@ public class PingBookDbContext : DbContext
 
 
         codefirst.SyncStructure<PingBook>();
+        codefirst.SyncStructure<PingAuthor>();
 
     }
 }

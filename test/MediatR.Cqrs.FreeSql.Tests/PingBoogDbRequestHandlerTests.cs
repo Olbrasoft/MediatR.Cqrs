@@ -1,12 +1,6 @@
-﻿using FluentAssertions;
-using FreeSql;
+﻿using FreeSql;
 using Moq;
 using Olbrasoft.Mapping;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MediatR.Cqrs.FreeSql.Tests;
 
@@ -27,7 +21,7 @@ public class PingBoogDbRequestHandlerTests
         return context;
     }
 
-    private PingBookDbContext _context;
+    private PingBookDbContext? _context;
 
     private PingBookDbContext Context
     {
@@ -69,20 +63,7 @@ public class PingBoogDbRequestHandlerTests
         handler.Context.Should().Be(context);
     }
 
-    //Constructor with parameter configurator and context set property ProjectionConfigurator and Context
-    [Fact]
-    public void Constructor_WithParameterConfiguratorAndContext_SetPropertyProjectionConfiguratorAndContext()
-    {
-        //Arrange
-        var configurator = new Mock<IConfigure<PingBook>>().Object;
-        var context = Context;
-        //Act
-        var handler = new PingBookDbRequestHandler(configurator, context);
 
-        //Assert
-        handler.ProjectionConfigurator.Should().Be(configurator);
-        handler.Context.Should().Be(context);
-    }
 
 
     [Fact]
@@ -181,7 +162,7 @@ public class PingBoogDbRequestHandlerTests
 
         //Assert
         result.Count().Should().Be(2);
-   
+
     }
 
 
@@ -209,33 +190,203 @@ public class PingBoogDbRequestHandlerTests
         //Arrange
         var context = Context;
 
-        var handler = new PingBookDbRequestHandler(  context);
+        var handler = new PingBookDbRequestHandler(context);
 
         //Act
         var result = await handler.GetOneOrNullAsync<PingBookDto>(x => x.Id == 1, default);
 
         //Assert
         result.Title.Should().Be("Book1");
+        result.Title2.Should().BeEmpty();
     }
 
-    //Handler with projectionConfigurator GetOneOrNullAsync<PingBookDto>  with parameter condition return book with id 1
+
+    //GetEnumerableAsync<PingBookDto> with parameter condition return 2 books
     [Fact]
-    public async Task Handler_WithProjectionConfigurator_GetOneOrNullAsyncPingBookDto_WithParameterCondition_ReturnPingBookDto()
+    public async Task GetEnumerableAsync_WithParameterCondition_ReturnPingBookDto()
     {
         //Arrange
         var context = Context;
 
-        var configurator = new PingBookToPingBookDtoConfigurator();
-
-        var handler = new PingBookDbRequestHandler(configurator, context);
+        var handler = new PingBookDbRequestHandler(context);
 
         //Act
-        var result = await handler.GetOneOrNullAsync<PingBookDto>(x => x.Id == 1, default);
+        var result = await handler.GetEnumerableAsync<PingBookDto>(x => x.Id > 1, default);
 
         //Assert
-        result.Title.Should().Be("Book1");
+        result.Count().Should().Be(2);
     }
-    
 
+    //GetEnumerableAsync<PingBookDto>  return 2 books
+    [Fact]
+    public async Task GetEnumerableAsync_ReturnPingBookDto()
+    {
+        //Arrange
+        var context = Context;
+
+        var handler = new PingBookDbRequestHandler(context);
+
+        //Act
+        var result = await handler.GetEnumerableAsync<PingBookDto>(default);
+
+        //Assert
+        result.Count().Should().Be(3);
+    }
+
+    //GetEnumerableAsync<PingBookDto> with parameter select return 2 books
+    [Fact]
+    public async Task GetEnumerableAsync_WithParameterSelect_ReturnPingBookDto()
+    {
+        //Arrange
+        var context = Context;
+
+        var handler = new PingBookDbRequestHandler(context);
+
+        //Act
+        var result = await handler.GetEnumerableAsync<PingBookDto>(handler.GetWhere(x => x.Id > 1), default);
+
+        //Assert
+        result.Count().Should().Be(2);
+    }
+
+    //GetOrderByDescending with parameter columnSelector c=>c.Title return first book id 2
+    [Fact]
+    public void GetOrderByDescending_WithParameterColumnSelector_ReturnISelectPingBook()
+    {
+        //Arrange
+        var context = Context;
+
+        var handler = new PingBookDbRequestHandler(context);
+
+        //Act
+        var result = handler.GetOrderByDescending(c => c.Title).First().Id;
+
+        //Assert
+        result.Should().Be(2);
+    }
+
+    //GetSelect<TForeignEntity> return ISelect<PingAuthor>
+    [Fact]
+    public void GetSelect_ReturnISelectPingAuthor()
+    {
+        //Arrange
+        var context = Context;
+
+        var handler = new PingBookDbRequestHandler(context);
+
+        //Act
+        var result = handler.GetSelect<PingAuthor>();
+
+        //Assert
+        result.Should().NotBeNull();
+        result.Count().Should().Be(3);
+    }
+
+    //Select return ISelect<PingBook>
+    [Fact]
+    public void Select_ReturnISelectPingBook()
+    {
+        //Arrange
+        var context = Context;
+
+        var handler = new PingBookDbRequestHandler(context);
+
+        //Act
+        var result = handler.Select;
+        var select = handler.Select;
+
+        //Assert
+        result.Should().NotBeNull();
+        result.Count().Should().Be(3);
+        select.Should().NotBeNull();
+        select.Count().Should().Be(3);
+
+    }
+
+
+    //GetOneOrNullAsync with parameter select and mapTo return bookDto with Title2 Book1
+    [Fact]
+    public async Task GetOneOrNullAsync_WithParameterSelectAndMapTo_ReturnPingBookDto()
+    {
+        //Arrange
+        var context = Context;
+
+        var handler = new PingBookDbRequestHandler(context);
+
+        //Act
+        var result = await handler.GetOneOrNullAsync(handler.GetWhere(x => x.Id == 1), x => new PingBookDto { Title2 = x.Title }, default);
+
+        //Assert
+        result.Title2.Should().Be("Book1");
+        result.Title.Should().Be("Book1");
+
+    }
+
+    //GetEnumerableAsync with parameter mapTo return 3 books and first book Title2 is Book1
+    [Fact]
+    public async Task GetEnumerableAsync_WithParameterMapTo_ReturnPingBookDto()
+    {
+        //Arrange
+        var context = Context;
+
+        var handler = new PingBookDbRequestHandler(context);
+
+        //Act
+        var result = await handler.GetEnumerableAsync(x => new PingBookDto { Title2 = x.Title }, default);
+
+        //Assert
+        result.Count().Should().Be(3);
+        result.First().Title2.Should().Be("Book1");
+    }
+
+    //GetEnumerableAsync with parameter select and mapTo return 3 books and first book Title2 is Book1
+    [Fact]
+    public async Task GetEnumerableAsync_WithParameterSelectAndMapTo_ReturnPingBookDto()
+    {
+        //Arrange
+        var context = Context;
+
+        var handler = new PingBookDbRequestHandler(context);
+
+        //Act
+        var result = await handler.GetEnumerableAsync(handler.GetWhere(x => x.Id > 0), x => new PingBookDto { Title2 = x.Title }, default);
+
+        //Assert
+        result.Count().Should().Be(3);
+        result.First().Title2.Should().Be("Book1");
+    }
+
+    //GetEnumerableAsync with parameters condition id>1 and mapTo return 2 books and first book Title2 is Book2
+    [Fact]
+    public async Task GetEnumerableAsync_WithParametersConditionAndMapTo_ReturnPingBookDto()
+    {
+        //Arrange
+        var context = Context;
+
+        var handler = new PingBookDbRequestHandler(context);
+
+        //Act
+        var result = await handler.GetEnumerableAsync(x => x.Id > 1, x => new PingBookDto { Title2 = x.Title }, default);
+
+        //Assert
+        result.Count().Should().Be(2);
+        result.First().Title2.Should().Be("Book2");
+    }
+
+    //GetOneOrNullAsync<TDestination> with params condition id=2 and mapTo return bookDto with Title2 Book2
+    [Fact]
+    public async Task GetOneOrNullAsync_WithParametersConditionAndMapTo_ReturnPingBookDto()
+    {
+        //Arrange
+        var context = Context;
+
+        var handler = new PingBookDbRequestHandler(context);
+
+        //Act
+        var result = await handler.GetOneOrNullAsync<PingBookDto>(x => x.Id == 2, x => new PingBookDto { Title2 = x.Title }, default);
+
+        //Assert
+        result.Title2.Should().Be("Book2");
+    }
 
 }

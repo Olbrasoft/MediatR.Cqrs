@@ -1,19 +1,15 @@
 ﻿
 using FreeSql;
 using Olbrasoft.Mapping;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MediatR.Cqrs.FreeSql.Tests;
 public class PingBookDbRequestHandler : DbRequestHandler<PingBookDbContext, PingBook, PingBookRequest, string>
 {
     public new PingBookDbContext Context => base.Context;
     public new IMapper? Mapper => base.Mapper;
-    public new IConfigure<PingBook>? ProjectionConfigurator => base.ProjectionConfigurator;
+
+    public new ISelect<PingBook> Select => base.Select;
 
     public new Task<bool> ExistsAsync(CancellationToken token) => base.ExistsAsync(token);
 
@@ -28,9 +24,6 @@ public class PingBookDbRequestHandler : DbRequestHandler<PingBookDbContext, Ping
     {
     }
 
-    public PingBookDbRequestHandler(IConfigure<PingBook> projectionConfigurator, PingBookDbContext context) : base(projectionConfigurator, context)
-    {
-    }
 
     public override Task<string> Handle(PingBookRequest request, CancellationToken token)
     {
@@ -47,8 +40,38 @@ public class PingBookDbRequestHandler : DbRequestHandler<PingBookDbContext, Ping
 
     public new async Task<IEnumerable<PingBook>> GetEnumerableAsync(ISelect<PingBook> select, CancellationToken token) => await base.GetEnumerableAsync(select, token);
 
-    public new async Task<TDestination> GetOneOrNullAsync<TDestination>(Expression<Func<PingBook, bool>> condition, CancellationToken token)  where TDestination : new()
+    public new async Task<TDestination> GetOneOrNullAsync<TDestination>(Expression<Func<PingBook, bool>> condition, CancellationToken token) where TDestination : new()
         => await base.GetOneOrNullAsync<TDestination>(condition, token);
 
+    public new async Task<IEnumerable<TDestination>> GetEnumerableAsync<TDestination>(Expression<Func<PingBook, bool>> condition, CancellationToken token)
+      where TDestination : new() => await base.GetEnumerableAsync<TDestination>(condition, token);
+
+    public new async Task<IEnumerable<TDestination>> GetEnumerableAsync<TDestination>(ISelect<PingBook> select, CancellationToken token)
+        where TDestination : new() => await base.GetEnumerableAsync<TDestination>(select, token);
+
+    public new async Task<IEnumerable<TDestination>> GetEnumerableAsync<TDestination>(CancellationToken token)
+        where TDestination : new() => await base.GetEnumerableAsync<TDestination>(token);
+
+    public new ISelect<PingBook> GetOrderByDescending<TMember>(Expression<Func<PingBook, TMember>> columnSelector) => base.GetOrderByDescending(columnSelector);
+
+    public new ISelect<TForeignEntity> GetSelect<TForeignEntity>() where TForeignEntity : class => base.GetSelect<TForeignEntity>();
+
+    public new Task<TDestination> GetOneOrNullAsync<TDestination>(ISelect<PingBook> select, Expression<Func<PingBook, TDestination>> mapTo, CancellationToken token) where TDestination : new()
+        => base.GetOneOrNullAsync(select, mapTo, token);
+
+    public new async Task<IEnumerable<TDestination>> GetEnumerableAsync<TDestination>(Expression<Func<PingBook, TDestination>> mapTo, CancellationToken token)
+       where TDestination : new() => await base.GetEnumerableAsync(mapTo, token);
+
+
+    public new async Task<IEnumerable<TDestination>> GetEnumerableAsync<TDestination>(ISelect<PingBook> select, Expression<Func<PingBook, TDestination>> mapTo, CancellationToken token)
+    where TDestination : new() => await base.GetEnumerableAsync(select, mapTo, token);
+
+
+    public new async Task<IEnumerable<TDestination>> GetEnumerableAsync<TDestination>(Expression<Func<PingBook, bool>> condition, Expression<Func<PingBook, TDestination>> mapTo, CancellationToken token)
+        where TDestination : new() => await base.GetEnumerableAsync(condition, mapTo, token);
+
+
+    public new Task<TDestination> GetOneOrNullAsync<TDestination>(Expression<Func<PingBook, bool>> condition, Expression<Func<PingBook, TDestination>> mapTo, CancellationToken token)
+       where TDestination : new() => base.GetOneOrNullAsync(condition, mapTo, token);
 
 }

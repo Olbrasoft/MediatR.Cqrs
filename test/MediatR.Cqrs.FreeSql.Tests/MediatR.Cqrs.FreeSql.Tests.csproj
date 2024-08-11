@@ -10,6 +10,12 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <Compile Remove="App_Data\**" />
+	  <EmbeddedResource Remove="App_Data\**" />
+	  <None Remove="App_Data\**" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="coverlet.collector" Version="6.0.0" />
 		<PackageReference Include="FluentAssertions" Version="6.12.0" />
 		<PackageReference Include="FreeSql.Provider.Sqlite" Version="3.2.833" />
@@ -26,10 +32,6 @@
 	<ItemGroup>
 		<Using Include="Xunit" />
 		<Using Include="FluentAssertions" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Folder Include="App_Data\" />
 	</ItemGroup>
 
 </Project>

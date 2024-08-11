@@ -1,116 +1,251 @@
 ﻿namespace MediatR.Cqrs.FreeSql;
+
+
+/// <summary>
+/// Represents a base class for handling database requests.
+/// </summary>
+/// <typeparam name="TContext">The type of the database context.</typeparam>
+/// <typeparam name="TEntity">The type of the entity.</typeparam>
+/// <typeparam name="TRequest">The type of the request.</typeparam>
+/// <typeparam name="TResult">The type of the result.</typeparam>
 public abstract class DbRequestHandler<TContext, TEntity, TRequest, TResult> : IRequestHandler<TRequest, TResult>
     where TEntity : class where TContext : DbContext where TRequest : IRequest<TResult>
 {
-    protected IConfigure<TEntity>? ProjectionConfigurator { get; }
 
-    private ISelect<TEntity>? _select;
-
+    /// <summary>
+    /// Gets or sets the IMapper instance used for object mapping.
+    /// </summary>
     protected IMapper? Mapper { get; }
 
+    /// <summary>
+    /// Gets the TContext instance used for database operations.
+    /// </summary>
     protected virtual TContext Context { get; }
 
-    protected ISelect<TEntity> Select
-    {
-        get => _select is not null ? _select : GetSelect();
+    /// <summary>
+    /// Gets the ISelect<TEntity> instance for querying entities.
+    /// </summary>
+    protected ISelect<TEntity> Select => GetSelect();
 
-        set => _select = value;
-    }
-
-
+    /// <summary>
+    /// Initializes a new instance of the DbRequestHandler class with the specified TContext instance.
+    /// </summary>
+    /// <param name="context">The TContext instance used for database operations.</param>
     protected DbRequestHandler(TContext context)
         => Context = context ?? throw new ArgumentNullException(nameof(context));
 
-    protected DbRequestHandler(IConfigure<TEntity> projectionConfigurator, TContext context) : this(context)
-       => ProjectionConfigurator = projectionConfigurator ?? throw new ArgumentNullException(nameof(projectionConfigurator));
-
+    /// <summary>
+    /// Initializes a new instance of the DbRequestHandler class with the specified IMapper and TContext instances.
+    /// </summary>
+    /// <param name="mapper">The IMapper instance used for object mapping.</param>
+    /// <param name="context">The TContext instance used for database operations.</param>
     public DbRequestHandler(IMapper mapper, TContext context) : this(context)
     {
         Mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
     }
 
-    protected Expression<Func<TEntity, TDestination>> ProjectionConfigure<TDestination>() where TDestination : new()
-        => ProjectionConfigurator is null
-            ? throw new NullReferenceException($"{nameof(ProjectionConfigurator)} is null !")
-            : ProjectionConfigurator.Configure<TDestination>();
-
+    /// <summary>
+    /// Handles the specified request and returns the result.
+    /// </summary>
+    /// <param name="request">The request to handle.</param>
+    /// <param name="token">The cancellation token.</param>
+    /// <returns>The result of handling the request.</returns>
     public abstract Task<TResult> Handle(TRequest request, CancellationToken token);
 
     /// <summary>
     /// Represents the select keyword from Structured Query Language.
     /// </summary>
-    /// <returns>Select</returns>
+    /// <returns>The ISelect<TEntity> instance for querying entities.</returns>
     private ISelect<TEntity> GetSelect() => Context.Set<TEntity>().Select;
 
-
+    /// <summary>
+    /// Gets the ISelect<TForeignEntity> instance for querying foreign entities.
+    /// </summary>
+    /// <typeparam name="TForeignEntity">The type of the foreign entity.</typeparam>
+    /// <returns>The ISelect<TForeignEntity> instance for querying foreign entities.</returns>
     protected ISelect<TForeignEntity> GetSelect<TForeignEntity>() where TForeignEntity : class => Context.Set<TForeignEntity>().Select;
 
     /// <summary>
-    /// Query conditions，Where(a => a.Id > 10)，Support navigation object query，Where(a => a.Author.Email == "2881099@qq.com")
+    /// Creates a new ISelect<TEntity> instance with the specified condition.
     /// </summary>
-    /// <param name="condition">lambda expression</param>
-    /// <returns>Select where</returns>
+    /// <param name="condition">The condition to filter the entities.</param>
+    /// <returns>The new ISelect<TEntity> instance with the specified condition.</returns>
     protected ISelect<TEntity> GetWhere(Expression<Func<TEntity, bool>> condition) => Select.Where(condition);
 
     /// <summary>
-    /// Sort by column ascending，OrderBy(a => a.Time)
+    /// Creates a new ISelect<TEntity> instance with the specified column selector for ascending order.
     /// </summary>
-    /// <typeparam name="TMember">property/column to sort by ascending</typeparam>
-    /// <param name="column">Selector property/column for ascending order</param>
-    /// <returns>Ascending selection</returns>
+    /// <typeparam name="TMember">The type of the property/column to sort by ascending.</typeparam>
+    /// <param name="columnSelector">The selector for the property/column to sort by ascending.</param>
+    /// <returns>The new ISelect<TEntity> instance with the specified column selector for ascending order.</returns>
     protected ISelect<TEntity> GetOrderBy<TMember>(Expression<Func<TEntity, TMember>> columnSelector) => Select.OrderBy(columnSelector);
 
     /// <summary>
-    /// Sort by column descending，OrderByDescending(a => a.Time)
+    /// Creates a new ISelect<TEntity> instance with the specified column selector for descending order.
     /// </summary>
-    /// <typeparam name="TMember">property/column to sort by descending</typeparam>
-    /// <param name="columnSelector">Selector property/column for descending order</param>
-    /// <returns>Descending selection</returns>
+    /// <typeparam name="TMember">The type of the property/column to sort by descending.</typeparam>
+    /// <param name="columnSelector">The selector for the property/column to sort by descending.</param>
+    /// <returns>The new ISelect<TEntity> instance with the specified column selector for descending order.</returns>
     protected ISelect<TEntity> GetOrderByDescending<TMember>(Expression<Func<TEntity, TMember>> columnSelector)
         => Select.OrderByDescending(columnSelector);
 
+    /// <summary>
+    /// Checks if any entity exists in the database.
+    /// </summary>
+    /// <param name="token">The cancellation token.</param>
+    /// <returns>True if any entity exists, otherwise false.</returns>
     protected Task<bool> ExistsAsync(CancellationToken token = default) => Select.AnyAsync(token);
-
-
-    protected async Task<TEntity> GetOneOrNullAsync(ISelect<TEntity> select, CancellationToken token)
-      => await select.ToOneAsync(token);
-
-    protected async Task<TDestination> GetOneOrNullAsync<TDestination>(ISelect<TEntity> select, CancellationToken token) where TDestination : new()
-    {
-        if (ProjectionConfigurator is not null)
-            return await select.ToOneAsync(ProjectionConfigure<TDestination>(), token);
-        else
-            return await select.ToOneAsync<TDestination>(token);
-    }
 
     #region GetEnumerableAsync
 
+    /// <summary>
+    /// Retrieves a list of entities asynchronously and maps them to the specified type.
+    /// </summary>
+    /// <typeparam name="TDestination">The type to map the entities to.</typeparam>
+    /// <param name="token">The cancellation token.</param>
+    /// <returns>A list of mapped entities.</returns>
     protected async Task<IEnumerable<TDestination>> GetEnumerableAsync<TDestination>(CancellationToken token)
        where TDestination : new()
-      => await Select.ToListAsync(ProjectionConfigure<TDestination>(), token);
+      => await Select.ToListAsync<TDestination>(token);
 
+    /// <summary>
+    /// Retrieves a list of entities asynchronously using the specified select statement and maps them to the specified type.
+    /// </summary>
+    /// <typeparam name="TDestination">The type to map the entities to.</typeparam>
+    /// <param name="select">The select statement to use.</param>
+    /// <param name="token">The cancellation token.</param>
+    /// <returns>A list of mapped entities.</returns>
     protected async Task<IEnumerable<TDestination>> GetEnumerableAsync<TDestination>(ISelect<TEntity> select, CancellationToken token)
       where TDestination : new()
-      => await select.ToListAsync(ProjectionConfigure<TDestination>(), token);
+      => await select.ToListAsync<TDestination>(token);
 
-
+    /// <summary>
+    /// Retrieves a list of entities asynchronously based on the specified condition and maps them to the specified type.
+    /// </summary>
+    /// <typeparam name="TDestination">The type to map the entities to.</typeparam>
+    /// <param name="condition">The condition to filter the entities.</param>
+    /// <param name="token">The cancellation token.</param>
+    /// <returns>A list of mapped entities.</returns>
     protected async Task<IEnumerable<TDestination>> GetEnumerableAsync<TDestination>(Expression<Func<TEntity, bool>> condition, CancellationToken token)
      where TDestination : new()
-      => await GetWhere(condition).ToListAsync(ProjectionConfigure<TDestination>(), token);
-   
-    
+      => await GetWhere(condition).ToListAsync<TDestination>(token);
+
+    /// <summary>
+    /// Retrieves a list of entities asynchronously using the specified select statement.
+    /// </summary>
+    /// <param name="select">The select statement to use.</param>
+    /// <param name="token">The cancellation token.</param>
+    /// <returns>A list of entities.</returns>
     protected async Task<IEnumerable<TEntity>> GetEnumerableAsync(ISelect<TEntity> select, CancellationToken token)
       => await select.ToListAsync(token);
 
+    /// <summary>
+    /// Retrieves a list of entities asynchronously based on the specified condition.
+    /// </summary>
+    /// <param name="condition">The condition to filter the entities.</param>
+    /// <param name="token">The cancellation token.</param>
+    /// <returns>A list of entities.</returns>
     protected async Task<IEnumerable<TEntity>> GetEnumerableAsync(Expression<Func<TEntity, bool>> condition, CancellationToken token)
       => await GetWhere(condition).ToListAsync(token);
 
+    /// <summary>
+    /// Retrieves a list of entities asynchronously and maps them to the specified type.
+    /// </summary>
+    /// <typeparam name="TDestination">The type to map the entities to.</typeparam>
+    /// <param name="mapTo">The mapping expression.</param>
+    /// <param name="token">The cancellation token.</param>
+    /// <returns>A list of mapped entities.</returns>
+    protected async Task<IEnumerable<TDestination>> GetEnumerableAsync<TDestination>(Expression<Func<TEntity, TDestination>> mapTo, CancellationToken token)
+      where TDestination : new() => await Select.ToListAsync(mapTo, token);
+
     #endregion GetEnumerableAsync
 
+    #region GetOneOrNullAsync 
+
+    /// <summary>
+    /// Retrieves a single entity asynchronously based on the specified condition.
+    /// </summary>
+    /// <param name="condition">The condition to filter the entity.</param>
+    /// <param name="token">The cancellation token.</param>
+    /// <returns>The retrieved entity, or null if not found.</returns>
     protected async Task<TEntity> GetOneOrNullAsync(Expression<Func<TEntity, bool>> condition, CancellationToken token)
       => await GetOneOrNullAsync(GetWhere(condition), token);
 
+    /// <summary>
+    /// Retrieves a single entity asynchronously based on the specified condition and maps it to the specified type.
+    /// </summary>
+    /// <typeparam name="TDestination">The type to map the entity to.</typeparam>
+    /// <param name="condition">The condition to filter the entity.</param>
+    /// <param name="token">The cancellation token.</param>
+    /// <returns>The retrieved entity, or null if not found.</returns>
     protected async Task<TDestination> GetOneOrNullAsync<TDestination>(Expression<Func<TEntity, bool>> condition, CancellationToken token)
         where TDestination : new()
       => await GetOneOrNullAsync<TDestination>(GetWhere(condition), token);
+
+    /// <summary>
+    /// Retrieves a single entity asynchronously using the specified select statement.
+    /// </summary>
+    /// <param name="select">The select statement to use.</param>
+    /// <param name="token">The cancellation token.</param>
+    /// <returns>The retrieved entity, or null if not found.</returns>
+    protected async Task<TEntity> GetOneOrNullAsync(ISelect<TEntity> select, CancellationToken token)
+      => await select.ToOneAsync(token);
+
+    /// <summary>
+    /// Retrieves a single entity asynchronously using the specified select statement and maps it to the specified type.
+    /// </summary>
+    /// <typeparam name="TDestination">The type to map the entity to.</typeparam>
+    /// <param name="select">The select statement to use.</param>
+    /// <param name="token">The cancellation token.</param>
+    /// <returns>The retrieved entity, or null if not found.</returns>
+    protected async Task<TDestination> GetOneOrNullAsync<TDestination>(ISelect<TEntity> select, CancellationToken token) where TDestination : new()
+        => await select.ToOneAsync<TDestination>(token);
+
+    /// <summary>
+    /// Retrieves a single entity asynchronously using the specified select statement and maps it to the specified type.
+    /// </summary>
+    /// <typeparam name="TDestination">The type to map the entity to.</typeparam>
+    /// <param name="select">The select statement to use.</param>
+    /// <param name="mapTo">The mapping expression.</param>
+    /// <param name="token">The cancellation token.</param>
+    /// <returns>The retrieved entity, or null if not found.</returns>
+    protected Task<TDestination> GetOneOrNullAsync<TDestination>(ISelect<TEntity> select, Expression<Func<TEntity, TDestination>> mapTo, CancellationToken token)
+        where TDestination : new()
+        => select.ToOneAsync(mapTo, token);
+
+    /// <summary>
+    /// Retrieves a list of entities asynchronously using the specified select statement and maps them to the specified type.
+    /// </summary>
+    /// <typeparam name="TDestination">The type to map the entities to.</typeparam>
+    /// <param name="select">The select statement to use.</param>
+    /// <param name="mapTo">The mapping expression.</param>
+    /// <param name="token">The cancellation token.</param>
+    /// <returns>A list of mapped entities.</returns>
+    protected async Task<IEnumerable<TDestination>> GetEnumerableAsync<TDestination>(ISelect<TEntity> select, Expression<Func<TEntity, TDestination>> mapTo, CancellationToken token)
+    where TDestination : new()
+        => await select.ToListAsync(mapTo, token);
+
+    /// <summary>
+    /// Retrieves a list of entities asynchronously based on the specified condition and maps them to the specified type.
+    /// </summary>
+    /// <typeparam name="TDestination">The type to map the entities to.</typeparam>
+    /// <param name="condition">The condition to filter the entities.</param>
+    /// <param name="mapTo">The mapping expression.</param>
+    /// <param name="token">The cancellation token.</param>
+    /// <returns>A list of mapped entities.</returns>
+    protected async Task<IEnumerable<TDestination>> GetEnumerableAsync<TDestination>(Expression<Func<TEntity, bool>> condition, Expression<Func<TEntity, TDestination>> mapTo, CancellationToken token)
+        where TDestination : new() => await GetWhere(condition).ToListAsync(mapTo, token);
+
+    /// <summary>
+    /// Retrieves a single entity asynchronously based on the specified condition and maps it to the specified type.
+    /// </summary>
+    /// <typeparam name="TDestination">The type to map the entity to.</typeparam>
+    /// <param name="condition">The condition to filter the entity.</param>
+    /// <param name="mapTo">The mapping expression.</param>
+    /// <param name="token">The cancellation token.</param>
+    /// <returns>The retrieved entity, or null if not found.</returns>
+    protected Task<TDestination> GetOneOrNullAsync<TDestination>(Expression<Func<TEntity, bool>> condition, Expression<Func<TEntity, TDestination>> mapTo, CancellationToken token)
+       where TDestination : new() => GetOneOrNullAsync(GetWhere(condition), mapTo, token);
+
+    #endregion GetOneOrNullAsync
 }
