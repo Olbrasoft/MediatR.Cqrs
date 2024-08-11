@@ -2,7 +2,7 @@
 using Olbrasoft.Mapping;
 
 namespace MediatR.Cqrs.FreeSql.Tests;
-public class PingDbCommandHandlerTests
+public class PingDbCommandHandlerTests : HaveCotextTests
 {
     ////UseAutoChangeCommandStatus set property command
     //[Fact]
@@ -129,4 +129,21 @@ public class PingDbCommandHandlerTests
         //Assert
         Assert.Throws<OperationCanceledException>(Act);
     }
+
+    //SaveOneEntityAsync return true use constructor with context
+    [Fact]
+    public async Task SaveOneEntityAsync_ReturnTrueUseConstructorWithContext()
+    {
+        //Arrange
+        var handler = new PingDbCommandHandler(Context);
+        Context.Add(new PingBook() { Title = "New Book" });
+
+        //Act
+        var result = await handler.SaveOneEntityAsync(CancellationToken.None);
+
+        //Assert
+        Assert.True(result);
+    }
+
+
 }

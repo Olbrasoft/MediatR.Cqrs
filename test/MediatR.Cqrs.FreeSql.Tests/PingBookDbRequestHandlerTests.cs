@@ -4,34 +4,10 @@ using Olbrasoft.Mapping;
 
 namespace MediatR.Cqrs.FreeSql.Tests;
 
-public class PingBookDbRequestHandlerTests
+public class PingBookDbRequestHandlerTests : HaveCotextTests
 {
 
-    private static readonly IFreeSql _freeSql = new FreeSqlBuilder()
-        .UseConnectionString(DataType.Sqlite, "Data Source=:memory:")
-        .Build();
 
-
-    private PingBookDbContext CreateContext()
-    {
-        var options = new DbContextOptions();
-
-        var context = new PingBookDbContext(_freeSql, options);
-
-        return context;
-    }
-
-    private PingBookDbContext? _context;
-
-    private PingBookDbContext Context
-    {
-        get
-        {
-
-            _context ??= CreateContext();
-            return _context;
-        }
-    }
 
     //Constructor with parameter context  set property Context
     [Fact]
@@ -421,5 +397,6 @@ public class PingBookDbRequestHandlerTests
         //Assert
         result.Should().BeFalse();
     }
+
 
 }

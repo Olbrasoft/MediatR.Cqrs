@@ -19,6 +19,7 @@ public class PingDbCommandHandler : DbCommandHandler<PingBookDbContext, PingBook
 
     public static void CallThrowIfCommandIsNullOrCancellationRequested(PingDbCommand command, CancellationToken token) => ThrowIfCommandIsNullOrCancellationRequested(command, token);
 
+    public new async Task<bool> SaveOneEntityAsync(CancellationToken token) => await base.SaveOneEntityAsync(token);
 
 
     //public new PingDbCommand? Command => base.Command;

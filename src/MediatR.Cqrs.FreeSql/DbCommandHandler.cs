@@ -23,7 +23,8 @@ public abstract class DbCommandHandler<TContext, TEntity, TCommand, TResult> : D
     }
 
 
-    protected async Task<bool> SaveOneEntityAsync(CancellationToken token) => await Context.SaveChangesAsync(token) == 1;
+    protected virtual async Task<bool> SaveOneEntityAsync(CancellationToken token) => await Context.SaveChangesAsync(token) == 1;
+
 
 
     /// <summary>
