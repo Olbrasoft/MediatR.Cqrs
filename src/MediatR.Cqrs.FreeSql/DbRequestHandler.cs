@@ -1,6 +1,5 @@
 ﻿namespace MediatR.Cqrs.FreeSql;
 
-
 /// <summary>
 /// Represents a base class for handling database requests.
 /// </summary>
@@ -8,31 +7,28 @@
 /// <typeparam name="TEntity">The type of the entity.</typeparam>
 /// <typeparam name="TRequest">The type of the request.</typeparam>
 /// <typeparam name="TResult">The type of the result.</typeparam>
-public abstract class DbRequestHandler<TContext, TEntity, TRequest, TResult> : IRequestHandler<TRequest, TResult>
+/// <remarks>
+/// Initializes a new instance of the DbRequestHandler class with the specified TContext instance.
+/// </remarks>
+/// <param name="context">The TContext instance used for database operations.</param>
+public abstract class DbRequestHandler<TContext, TEntity, TRequest, TResult>(TContext context) : IRequestHandler<TRequest, TResult>
     where TEntity : class where TContext : DbContext where TRequest : IRequest<TResult>
 {
 
     /// <summary>
     /// Gets or sets the IMapper instance used for object mapping.
     /// </summary>
-    protected IMapper? Mapper { get; }
+    protected virtual IMapper? Mapper { get; }
 
     /// <summary>
     /// Gets the TContext instance used for database operations.
     /// </summary>
-    protected virtual TContext Context { get; }
+    protected virtual TContext Context { get; } = context ?? throw new ArgumentNullException(nameof(context));
 
     /// <summary>
     /// Gets the ISelect<TEntity> instance for querying entities.
     /// </summary>
-    protected ISelect<TEntity> Select => GetSelect();
-
-    /// <summary>
-    /// Initializes a new instance of the DbRequestHandler class with the specified TContext instance.
-    /// </summary>
-    /// <param name="context">The TContext instance used for database operations.</param>
-    protected DbRequestHandler(TContext context)
-        => Context = context ?? throw new ArgumentNullException(nameof(context));
+    protected virtual ISelect<TEntity> Select => GetSelect();
 
     /// <summary>
     /// Initializes a new instance of the DbRequestHandler class with the specified IMapper and TContext instances.
@@ -63,14 +59,14 @@ public abstract class DbRequestHandler<TContext, TEntity, TRequest, TResult> : I
     /// </summary>
     /// <typeparam name="TForeignEntity">The type of the foreign entity.</typeparam>
     /// <returns>The ISelect<TForeignEntity> instance for querying foreign entities.</returns>
-    protected ISelect<TForeignEntity> GetSelect<TForeignEntity>() where TForeignEntity : class => Context.Set<TForeignEntity>().Select;
+    protected virtual ISelect<TForeignEntity> GetSelect<TForeignEntity>() where TForeignEntity : class => Context.Set<TForeignEntity>().Select;
 
     /// <summary>
     /// Creates a new ISelect<TEntity> instance with the specified condition.
     /// </summary>
     /// <param name="condition">The condition to filter the entities.</param>
     /// <returns>The new ISelect<TEntity> instance with the specified condition.</returns>
-    protected ISelect<TEntity> GetWhere(Expression<Func<TEntity, bool>> condition) => Select.Where(condition);
+    protected virtual ISelect<TEntity> GetWhere(Expression<Func<TEntity, bool>> condition) => Select.Where(condition);
 
     /// <summary>
     /// Creates a new ISelect<TEntity> instance with the specified column selector for ascending order.
@@ -78,7 +74,7 @@ public abstract class DbRequestHandler<TContext, TEntity, TRequest, TResult> : I
     /// <typeparam name="TMember">The type of the property/column to sort by ascending.</typeparam>
     /// <param name="columnSelector">The selector for the property/column to sort by ascending.</param>
     /// <returns>The new ISelect<TEntity> instance with the specified column selector for ascending order.</returns>
-    protected ISelect<TEntity> GetOrderBy<TMember>(Expression<Func<TEntity, TMember>> columnSelector) => Select.OrderBy(columnSelector);
+    protected virtual ISelect<TEntity> GetOrderBy<TMember>(Expression<Func<TEntity, TMember>> columnSelector) => Select.OrderBy(columnSelector);
 
     /// <summary>
     /// Creates a new ISelect<TEntity> instance with the specified column selector for descending order.
@@ -86,7 +82,7 @@ public abstract class DbRequestHandler<TContext, TEntity, TRequest, TResult> : I
     /// <typeparam name="TMember">The type of the property/column to sort by descending.</typeparam>
     /// <param name="columnSelector">The selector for the property/column to sort by descending.</param>
     /// <returns>The new ISelect<TEntity> instance with the specified column selector for descending order.</returns>
-    protected ISelect<TEntity> GetOrderByDescending<TMember>(Expression<Func<TEntity, TMember>> columnSelector)
+    protected virtual ISelect<TEntity> GetOrderByDescending<TMember>(Expression<Func<TEntity, TMember>> columnSelector)
         => Select.OrderByDescending(columnSelector);
 
     /// <summary>
@@ -94,7 +90,18 @@ public abstract class DbRequestHandler<TContext, TEntity, TRequest, TResult> : I
     /// </summary>
     /// <param name="token">The cancellation token.</param>
     /// <returns>True if any entity exists, otherwise false.</returns>
-    protected Task<bool> ExistsAsync(CancellationToken token = default) => Select.AnyAsync(token);
+    protected virtual Task<bool> ExistsAsync(CancellationToken token = default) => Select.AnyAsync(token);
+
+
+    /// <summary>
+    /// Checks if any entity exists in the database based on the specified condition.
+    /// </summary>
+    /// <param name="condition">The condition to filter the entities.</param>
+    /// <param name="token">The cancellation token.</param>
+    /// <returns>True if any entity exists, otherwise false.</returns>
+    protected virtual Task<bool> ExistsAsync(Expression<Func<TEntity, bool>> condition, CancellationToken token = default) => Select.AnyAsync(condition, token);
+
+
 
     #region GetEnumerableAsync
 
@@ -104,7 +111,7 @@ public abstract class DbRequestHandler<TContext, TEntity, TRequest, TResult> : I
     /// <typeparam name="TDestination">The type to map the entities to.</typeparam>
     /// <param name="token">The cancellation token.</param>
     /// <returns>A list of mapped entities.</returns>
-    protected async Task<IEnumerable<TDestination>> GetEnumerableAsync<TDestination>(CancellationToken token)
+    protected virtual async Task<IEnumerable<TDestination>> GetEnumerableAsync<TDestination>(CancellationToken token)
        where TDestination : new()
       => await Select.ToListAsync<TDestination>(token);
 
@@ -115,7 +122,7 @@ public abstract class DbRequestHandler<TContext, TEntity, TRequest, TResult> : I
     /// <param name="select">The select statement to use.</param>
     /// <param name="token">The cancellation token.</param>
     /// <returns>A list of mapped entities.</returns>
-    protected async Task<IEnumerable<TDestination>> GetEnumerableAsync<TDestination>(ISelect<TEntity> select, CancellationToken token)
+    protected virtual async Task<IEnumerable<TDestination>> GetEnumerableAsync<TDestination>(ISelect<TEntity> select, CancellationToken token)
       where TDestination : new()
       => await select.ToListAsync<TDestination>(token);
 
@@ -126,7 +133,7 @@ public abstract class DbRequestHandler<TContext, TEntity, TRequest, TResult> : I
     /// <param name="condition">The condition to filter the entities.</param>
     /// <param name="token">The cancellation token.</param>
     /// <returns>A list of mapped entities.</returns>
-    protected async Task<IEnumerable<TDestination>> GetEnumerableAsync<TDestination>(Expression<Func<TEntity, bool>> condition, CancellationToken token)
+    protected virtual async Task<IEnumerable<TDestination>> GetEnumerableAsync<TDestination>(Expression<Func<TEntity, bool>> condition, CancellationToken token)
      where TDestination : new()
       => await GetWhere(condition).ToListAsync<TDestination>(token);
 
@@ -136,7 +143,7 @@ public abstract class DbRequestHandler<TContext, TEntity, TRequest, TResult> : I
     /// <param name="select">The select statement to use.</param>
     /// <param name="token">The cancellation token.</param>
     /// <returns>A list of entities.</returns>
-    protected async Task<IEnumerable<TEntity>> GetEnumerableAsync(ISelect<TEntity> select, CancellationToken token)
+    protected virtual async Task<IEnumerable<TEntity>> GetEnumerableAsync(ISelect<TEntity> select, CancellationToken token)
       => await select.ToListAsync(token);
 
     /// <summary>
@@ -145,7 +152,7 @@ public abstract class DbRequestHandler<TContext, TEntity, TRequest, TResult> : I
     /// <param name="condition">The condition to filter the entities.</param>
     /// <param name="token">The cancellation token.</param>
     /// <returns>A list of entities.</returns>
-    protected async Task<IEnumerable<TEntity>> GetEnumerableAsync(Expression<Func<TEntity, bool>> condition, CancellationToken token)
+    protected virtual async Task<IEnumerable<TEntity>> GetEnumerableAsync(Expression<Func<TEntity, bool>> condition, CancellationToken token)
       => await GetWhere(condition).ToListAsync(token);
 
     /// <summary>
@@ -155,7 +162,7 @@ public abstract class DbRequestHandler<TContext, TEntity, TRequest, TResult> : I
     /// <param name="mapTo">The mapping expression.</param>
     /// <param name="token">The cancellation token.</param>
     /// <returns>A list of mapped entities.</returns>
-    protected async Task<IEnumerable<TDestination>> GetEnumerableAsync<TDestination>(Expression<Func<TEntity, TDestination>> mapTo, CancellationToken token)
+    protected virtual async Task<IEnumerable<TDestination>> GetEnumerableAsync<TDestination>(Expression<Func<TEntity, TDestination>> mapTo, CancellationToken token)
       where TDestination : new() => await Select.ToListAsync(mapTo, token);
 
     #endregion GetEnumerableAsync
@@ -168,7 +175,7 @@ public abstract class DbRequestHandler<TContext, TEntity, TRequest, TResult> : I
     /// <param name="condition">The condition to filter the entity.</param>
     /// <param name="token">The cancellation token.</param>
     /// <returns>The retrieved entity, or null if not found.</returns>
-    protected async Task<TEntity> GetOneOrNullAsync(Expression<Func<TEntity, bool>> condition, CancellationToken token)
+    protected virtual async Task<TEntity> GetOneOrNullAsync(Expression<Func<TEntity, bool>> condition, CancellationToken token)
       => await GetOneOrNullAsync(GetWhere(condition), token);
 
     /// <summary>
@@ -178,7 +185,7 @@ public abstract class DbRequestHandler<TContext, TEntity, TRequest, TResult> : I
     /// <param name="condition">The condition to filter the entity.</param>
     /// <param name="token">The cancellation token.</param>
     /// <returns>The retrieved entity, or null if not found.</returns>
-    protected async Task<TDestination> GetOneOrNullAsync<TDestination>(Expression<Func<TEntity, bool>> condition, CancellationToken token)
+    protected virtual async Task<TDestination> GetOneOrNullAsync<TDestination>(Expression<Func<TEntity, bool>> condition, CancellationToken token)
         where TDestination : new()
       => await GetOneOrNullAsync<TDestination>(GetWhere(condition), token);
 
@@ -188,7 +195,7 @@ public abstract class DbRequestHandler<TContext, TEntity, TRequest, TResult> : I
     /// <param name="select">The select statement to use.</param>
     /// <param name="token">The cancellation token.</param>
     /// <returns>The retrieved entity, or null if not found.</returns>
-    protected async Task<TEntity> GetOneOrNullAsync(ISelect<TEntity> select, CancellationToken token)
+    protected virtual async Task<TEntity> GetOneOrNullAsync(ISelect<TEntity> select, CancellationToken token)
       => await select.ToOneAsync(token);
 
     /// <summary>
@@ -198,7 +205,7 @@ public abstract class DbRequestHandler<TContext, TEntity, TRequest, TResult> : I
     /// <param name="select">The select statement to use.</param>
     /// <param name="token">The cancellation token.</param>
     /// <returns>The retrieved entity, or null if not found.</returns>
-    protected async Task<TDestination> GetOneOrNullAsync<TDestination>(ISelect<TEntity> select, CancellationToken token) where TDestination : new()
+    protected virtual async Task<TDestination> GetOneOrNullAsync<TDestination>(ISelect<TEntity> select, CancellationToken token) where TDestination : new()
         => await select.ToOneAsync<TDestination>(token);
 
     /// <summary>
@@ -209,7 +216,7 @@ public abstract class DbRequestHandler<TContext, TEntity, TRequest, TResult> : I
     /// <param name="mapTo">The mapping expression.</param>
     /// <param name="token">The cancellation token.</param>
     /// <returns>The retrieved entity, or null if not found.</returns>
-    protected Task<TDestination> GetOneOrNullAsync<TDestination>(ISelect<TEntity> select, Expression<Func<TEntity, TDestination>> mapTo, CancellationToken token)
+    protected virtual Task<TDestination> GetOneOrNullAsync<TDestination>(ISelect<TEntity> select, Expression<Func<TEntity, TDestination>> mapTo, CancellationToken token)
         where TDestination : new()
         => select.ToOneAsync(mapTo, token);
 
@@ -221,7 +228,7 @@ public abstract class DbRequestHandler<TContext, TEntity, TRequest, TResult> : I
     /// <param name="mapTo">The mapping expression.</param>
     /// <param name="token">The cancellation token.</param>
     /// <returns>A list of mapped entities.</returns>
-    protected async Task<IEnumerable<TDestination>> GetEnumerableAsync<TDestination>(ISelect<TEntity> select, Expression<Func<TEntity, TDestination>> mapTo, CancellationToken token)
+    protected virtual async Task<IEnumerable<TDestination>> GetEnumerableAsync<TDestination>(ISelect<TEntity> select, Expression<Func<TEntity, TDestination>> mapTo, CancellationToken token)
     where TDestination : new()
         => await select.ToListAsync(mapTo, token);
 
@@ -233,7 +240,7 @@ public abstract class DbRequestHandler<TContext, TEntity, TRequest, TResult> : I
     /// <param name="mapTo">The mapping expression.</param>
     /// <param name="token">The cancellation token.</param>
     /// <returns>A list of mapped entities.</returns>
-    protected async Task<IEnumerable<TDestination>> GetEnumerableAsync<TDestination>(Expression<Func<TEntity, bool>> condition, Expression<Func<TEntity, TDestination>> mapTo, CancellationToken token)
+    protected virtual async Task<IEnumerable<TDestination>> GetEnumerableAsync<TDestination>(Expression<Func<TEntity, bool>> condition, Expression<Func<TEntity, TDestination>> mapTo, CancellationToken token)
         where TDestination : new() => await GetWhere(condition).ToListAsync(mapTo, token);
 
     /// <summary>
@@ -244,7 +251,7 @@ public abstract class DbRequestHandler<TContext, TEntity, TRequest, TResult> : I
     /// <param name="mapTo">The mapping expression.</param>
     /// <param name="token">The cancellation token.</param>
     /// <returns>The retrieved entity, or null if not found.</returns>
-    protected Task<TDestination> GetOneOrNullAsync<TDestination>(Expression<Func<TEntity, bool>> condition, Expression<Func<TEntity, TDestination>> mapTo, CancellationToken token)
+    protected virtual Task<TDestination> GetOneOrNullAsync<TDestination>(Expression<Func<TEntity, bool>> condition, Expression<Func<TEntity, TDestination>> mapTo, CancellationToken token)
        where TDestination : new() => GetOneOrNullAsync(GetWhere(condition), mapTo, token);
 
     #endregion GetOneOrNullAsync

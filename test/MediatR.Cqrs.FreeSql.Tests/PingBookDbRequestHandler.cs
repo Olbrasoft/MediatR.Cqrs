@@ -74,4 +74,7 @@ public class PingBookDbRequestHandler : DbRequestHandler<PingBookDbContext, Ping
     public new Task<TDestination> GetOneOrNullAsync<TDestination>(Expression<Func<PingBook, bool>> condition, Expression<Func<PingBook, TDestination>> mapTo, CancellationToken token)
        where TDestination : new() => base.GetOneOrNullAsync(condition, mapTo, token);
 
+
+    public new Task<bool> ExistsAsync(Expression<Func<PingBook, bool>> exp, CancellationToken token = default) => base.ExistsAsync(exp, token);
+
 }

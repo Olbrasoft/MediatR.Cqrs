@@ -4,7 +4,7 @@ using Olbrasoft.Mapping;
 
 namespace MediatR.Cqrs.FreeSql.Tests;
 
-public class PingBoogDbRequestHandlerTests
+public class PingBookDbRequestHandlerTests
 {
 
     private static readonly IFreeSql _freeSql = new FreeSqlBuilder()
@@ -387,6 +387,39 @@ public class PingBoogDbRequestHandlerTests
 
         //Assert
         result.Title2.Should().Be("Book2");
+    }
+
+
+    //ExistsAsync with parameter exp return true
+    [Fact]
+    public async Task ExistsAsync_WithParameterExp_ReturnTrue()
+    {
+        //Arrange
+        var context = Context;
+
+        var handler = new PingBookDbRequestHandler(context);
+
+        //Act
+        var result = await handler.ExistsAsync(x => x.Id == 1, default);
+
+        //Assert
+        result.Should().BeTrue();
+    }
+
+    //ExistsAsync with parameter exp return false
+    [Fact]
+    public async Task ExistsAsync_WithParameterExp_ReturnFalse()
+    {
+        //Arrange
+        var context = Context;
+
+        var handler = new PingBookDbRequestHandler(context);
+
+        //Act
+        var result = await handler.ExistsAsync(x => x.Id == 0, default);
+
+        //Assert
+        result.Should().BeFalse();
     }
 
 }
