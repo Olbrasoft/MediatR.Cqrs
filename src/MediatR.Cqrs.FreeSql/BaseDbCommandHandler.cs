@@ -105,6 +105,7 @@ public abstract class BaseDbCommandHandler<TContext, TEntity, TCommand, TResult>
         return CommandStatus.Error;
     }
 
+
     protected virtual async Task<CommandStatus> RemoveAndSaveOneAsync(TEntity detachedOrUnchangedEntity, CancellationToken token = default)
     {
 

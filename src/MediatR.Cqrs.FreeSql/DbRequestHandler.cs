@@ -165,6 +165,12 @@ public abstract class DbRequestHandler<TContext, TEntity, TRequest, TResult>(TCo
     protected virtual async Task<IEnumerable<TDestination>> GetEnumerableAsync<TDestination>(Expression<Func<TEntity, TDestination>> mapTo, CancellationToken token)
       where TDestination : new() => await Select.ToListAsync(mapTo, token);
 
+
+    protected virtual async Task<IEnumerable<TDestination>> GetEnumerableAsync<TDestination>(Expression<Func<TEntity, TDestination>> mapTo, ISelect<TEntity> select, CancellationToken token)
+    where TDestination : new() => await select.ToListAsync(mapTo, token);
+
+
+
     #endregion GetEnumerableAsync
 
     #region GetOneOrNullAsync 
