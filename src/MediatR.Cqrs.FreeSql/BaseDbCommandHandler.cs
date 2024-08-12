@@ -6,7 +6,6 @@ public abstract class BaseDbCommandHandler<TContext, TEntity, TCommand, TResult>
     protected virtual TCommand? Command { get; set; }
 
 
-
     protected BaseDbCommandHandler(TContext context) : base(context)
     {
     }
@@ -15,17 +14,14 @@ public abstract class BaseDbCommandHandler<TContext, TEntity, TCommand, TResult>
     {
     }
 
+    protected override async Task<bool> ExistsAsync(Expression<Func<TEntity, bool>> condition, CancellationToken token = default)
+    {
+        var result = await Select.AnyAsync(condition, token);
 
+        if (!result) TrySetCommandStatus(CommandStatus.NotFound);
 
-
-    //protected async Task<bool> ExistsAsync(Expression<Func<TEntity, bool>> exp, CancellationToken token = default)
-    //{
-    //    var result = await Select.AnyAsync(exp, token);
-
-    //    if (!result) TrySetCommandStatus(CommandStatus.NotFound);
-
-    //    return result;
-    //}
+        return result;
+    }
 
 
     protected virtual bool TrySetCommandStatus(CommandStatus status)
@@ -36,7 +32,6 @@ public abstract class BaseDbCommandHandler<TContext, TEntity, TCommand, TResult>
 
         return true;
     }
-
 
 
     protected virtual void UseAutoChangeCommandStatus(TCommand command)
@@ -52,6 +47,7 @@ public abstract class BaseDbCommandHandler<TContext, TEntity, TCommand, TResult>
         TrySetCommandStatus(CommandStatus.Added);
     }
 
+
     protected virtual async Task<CommandStatus> AddAndSaveAsync(TEntity detachedEntity, CancellationToken token = default)
     {
         await AddAsync(detachedEntity, token);
@@ -66,16 +62,18 @@ public abstract class BaseDbCommandHandler<TContext, TEntity, TCommand, TResult>
         return CommandStatus.Error;
     }
 
-    protected virtual async Task<CommandStatus> UpdateAndSaveAsync(TEntity unchangedEntity, CancellationToken token = default)
+
+    protected virtual async Task<CommandStatus> UpdateAndSaveOneAsync(TEntity unchangedEntity, CancellationToken token = default)
     {
         await Entities.UpdateAsync(unchangedEntity, token);
 
         TrySetCommandStatus(CommandStatus.Modified);
 
-        return await SaveAsync(unchangedEntity, token);
+        return await SaveOneAsync(unchangedEntity, token);
     }
 
-    protected virtual async Task<CommandStatus> SaveAsync(TEntity modifiedEntity, CancellationToken token = default)
+
+    protected virtual async Task<CommandStatus> SaveOneAsync(TEntity modifiedEntity, CancellationToken token = default)
     {
         TrySetCommandStatus(CommandStatus.Modified);
 
@@ -90,9 +88,9 @@ public abstract class BaseDbCommandHandler<TContext, TEntity, TCommand, TResult>
     }
 
 
-    protected virtual async Task<CommandStatus> RemoveAndSaveAsync(Expression<Func<TEntity, bool>> exp, CancellationToken token = default)
+    protected virtual async Task<CommandStatus> RemoveAndSaveOneAsync(Expression<Func<TEntity, bool>> oneEntityCondition, CancellationToken token = default)
     {
-        if (await Entities.RemoveAsync(exp, token) == 1)
+        if (await Entities.RemoveAsync(oneEntityCondition, token) == 1)
         {
             TrySetCommandStatus(CommandStatus.Removed);
 
@@ -107,7 +105,7 @@ public abstract class BaseDbCommandHandler<TContext, TEntity, TCommand, TResult>
         return CommandStatus.Error;
     }
 
-    protected virtual async Task<CommandStatus> RemoveAndSaveAsync(TEntity detachedOrUnchangedEntity, CancellationToken token = default)
+    protected virtual async Task<CommandStatus> RemoveAndSaveOneAsync(TEntity detachedOrUnchangedEntity, CancellationToken token = default)
     {
 
         Entities.Remove(detachedOrUnchangedEntity);

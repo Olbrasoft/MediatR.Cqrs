@@ -2,18 +2,14 @@
 
 namespace MediatR.Cqrs.FreeSql.Tests;
 
-public class HaveCotextTests : IDisposable
+public class HaveCotextTests
 {
     protected static readonly IFreeSql _freeSql = new FreeSqlBuilder()
-    .UseConnectionString(DataType.Sqlite, "Data Source=:memory:")
+    .UseConnectionString(DataType.Sqlite, "Data Source=:memory:;Cache=Shared;")
     .Build();
 
+    private static readonly PingBookDbContext _context = new PingBookDbContext(_freeSql, new DbContextOptions());
 
-    public void Dispose()
-    {
-        _context?.Dispose();
-        GC.SuppressFinalize(this);
-    }
 
     private PingBookDbContext CreateContext()
     {
@@ -24,14 +20,12 @@ public class HaveCotextTests : IDisposable
         return context;
     }
 
-    private PingBookDbContext? _context;
+
 
     protected PingBookDbContext Context
     {
         get
         {
-
-            _context ??= CreateContext();
             return _context;
         }
     }

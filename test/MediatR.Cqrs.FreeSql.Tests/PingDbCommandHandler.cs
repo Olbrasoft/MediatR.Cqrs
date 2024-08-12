@@ -1,4 +1,5 @@
-﻿using Olbrasoft.Mapping;
+﻿using FreeSql;
+using Olbrasoft.Mapping;
 
 namespace MediatR.Cqrs.FreeSql.Tests;
 public class PingDbCommandHandler : DbCommandHandler<PingBookDbContext, PingBook, PingDbCommand, string>
@@ -21,6 +22,9 @@ public class PingDbCommandHandler : DbCommandHandler<PingBookDbContext, PingBook
 
     public new async Task<bool> SaveOneEntityAsync(CancellationToken token) => await base.SaveOneEntityAsync(token);
 
+    public new DbSet<TForeignEntity> GetSet<TForeignEntity>() where TForeignEntity : class => base.GetSet<TForeignEntity>();
+
+    public new DbSet<PingBook> Entities => base.Entities;
 
     //public new PingDbCommand? Command => base.Command;
 

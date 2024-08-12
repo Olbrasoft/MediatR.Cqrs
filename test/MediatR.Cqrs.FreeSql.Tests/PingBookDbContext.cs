@@ -8,6 +8,7 @@ public class PingBookDbContext : DbContext
     {
     }
 
+
     public PingBookDbContext(IFreeSql fsql, DbContextOptions options) : base(fsql, options)
     {
     }
@@ -47,6 +48,6 @@ public class PingBookDbContext : DbContext
 
         codefirst.SyncStructure<PingBook>();
         codefirst.SyncStructure<PingAuthor>();
-
+        base.OnModelCreating(codefirst);
     }
 }

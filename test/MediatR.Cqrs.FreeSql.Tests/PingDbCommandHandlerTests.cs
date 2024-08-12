@@ -1,9 +1,12 @@
-﻿using Moq;
+﻿using FreeSql;
+using Moq;
 using Olbrasoft.Mapping;
 
 namespace MediatR.Cqrs.FreeSql.Tests;
 public class PingDbCommandHandlerTests : HaveCotextTests
 {
+
+
     ////UseAutoChangeCommandStatus set property command
     //[Fact]
     //public void UseAutoChangeCommandStatus_SetPropertyCommand()
@@ -136,14 +139,57 @@ public class PingDbCommandHandlerTests : HaveCotextTests
     {
         //Arrange
         var handler = new PingDbCommandHandler(Context);
-        Context.Add(new PingBook() { Title = "New Book" });
+        var book = new PingBook() { Title = "New Book" };
+
+        Context.Add(book);
 
         //Act
         var result = await handler.SaveOneEntityAsync(CancellationToken.None);
 
+        Context.Remove(book);
+
+        Context.SaveChanges();
+
         //Assert
         Assert.True(result);
+
     }
 
+    //GetSet return DbSet of PingAuthor
+
+    [Fact]
+    public void GetSet_ReturnDbSetOfPingAuthor()
+    {
+
+        var options = new DbContextOptions();
+        var context = new PingBookDbContext(_freeSql, options);
+
+        //Arrange
+        var handler = new PingDbCommandHandler(Context);
+
+        //Act
+        var result = handler.GetSet<PingAuthor>();
+
+        //Assert
+        Assert.IsAssignableFrom<DbSet<PingAuthor>>(result);
+        result.Select.Count().Should().Be(3);
+
+    }
+
+
+    //Entities return DbSet of PingBook
+    [Fact]
+    public void Entities_ReturnDbSetOfPingBook()
+    {
+        //Arrange
+        var handler = new PingDbCommandHandler(Context);
+
+        //Act
+        var result = handler.Entities;
+
+        //Assert
+        Assert.IsAssignableFrom<DbSet<PingBook>>(result);
+        result.Select.Count().Should().Be(3);
+    }
 
 }
