@@ -15,7 +15,6 @@ public abstract class DbCommandHandler<TContext, TEntity, TCommand, TResult> : D
     /// </summary>
     protected virtual DbSet<TEntity> Entities => Context.Set<TEntity>();
 
-
     /// <summary>
     /// Initializes a new instance of the <see cref="DbCommandHandler{TContext, TEntity, TCommand, TResult}"/> class.
     /// </summary>
@@ -72,11 +71,11 @@ public abstract class DbCommandHandler<TContext, TEntity, TCommand, TResult> : D
     }
 
     /// <summary>
-    /// Maps the command object to a new entity.
+    /// Creates a new instance of the entity based on the command.
     /// </summary>
-    /// <param name="command">The command object to map from.</param>
-    /// <returns>The mapped new entity.</returns>
-    protected virtual TEntity MapCommandToNewEntity(TCommand command) => GetMapper().MapSourceToNewDestination<TEntity>(command);
+    /// <param name="command">The command object.</param>
+    /// <returns>The created entity.</returns>
+    protected virtual TEntity CreateEntityFromCommand(TCommand command) => GetMapper().MapSourceToNewDestination<TEntity>(command);
 
     /// <summary>
     /// Execute a mapping from the command to the existing entity.
@@ -84,10 +83,34 @@ public abstract class DbCommandHandler<TContext, TEntity, TCommand, TResult> : D
     /// <param name="command">Command object to map from</param>
     /// <param name="entity">Destination object to map into</param>
     /// <returns>The mapped destination object, same instance as the <paramref name="entity"/> object and returns.</returns>
-    protected virtual TEntity MapCommandToExistingEntity(TCommand command, TEntity entity)
+    protected virtual TEntity MapCommandToEntity(TCommand command, TEntity entity)
     {
         GetMapper().MapSourceToExistingDestination(command, entity);
         return entity;
+    }
+
+    /// <summary>
+    /// Saves the changes made to the entity asynchronously.
+    /// </summary>
+    /// <param name="entity">The entity to save.</param>
+    /// <param name="token">The cancellation token.</param>
+    /// <returns>A task representing the asynchronous operation. The task result is the number of objects written to the underlying database.</returns>
+    protected virtual async Task<int> SaveAsync(TEntity entity, CancellationToken token = default)
+    {
+        await Entities.AddOrUpdateAsync(entity, token);
+        return await Context.SaveChangesAsync(token);
+    }
+
+    /// <summary>
+    /// Deletes entities that match the specified condition asynchronously.
+    /// </summary>
+    /// <param name="condition">The condition to match.</param>
+    /// <param name="token">The cancellation token.</param>
+    /// <returns>A task representing the asynchronous operation. The task result is the number of objects written to the underlying database.</returns>
+    protected virtual async Task<int> DeleteAsync(Expression<Func<TEntity, bool>> condition, CancellationToken token = default)
+    {
+        await Entities.RemoveAsync(condition, token);
+        return await Context.SaveChangesAsync(token);
     }
 
     /// <summary>

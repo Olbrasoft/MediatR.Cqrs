@@ -19,6 +19,7 @@ public abstract class DbRequestHandler<TContext, TEntity, TRequest, TResult>(TCo
     /// Gets or sets the IMapper instance used for object mapping.
     /// </summary>
     protected virtual IMapper? Mapper { get; }
+       
 
     /// <summary>
     /// Gets the TContext instance used for database operations.
@@ -102,7 +103,6 @@ public abstract class DbRequestHandler<TContext, TEntity, TRequest, TResult>(TCo
     protected virtual Task<bool> ExistsAsync(Expression<Func<TEntity, bool>> condition, CancellationToken token = default) => Select.AnyAsync(condition, token);
 
 
-
     #region GetEnumerableAsync
 
     /// <summary>
@@ -113,7 +113,10 @@ public abstract class DbRequestHandler<TContext, TEntity, TRequest, TResult>(TCo
     /// <returns>A list of mapped entities.</returns>
     protected virtual async Task<IEnumerable<TDestination>> GetEnumerableAsync<TDestination>(CancellationToken token)
        where TDestination : new()
-      => await Select.ToListAsync<TDestination>(token);
+    {
+       
+        return await Select.ToListAsync<TDestination>(token);
+    }
 
     /// <summary>
     /// Retrieves a list of entities asynchronously using the specified select statement and maps them to the specified type.
